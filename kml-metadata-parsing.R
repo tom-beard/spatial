@@ -23,7 +23,14 @@ test_file <- path(test_dir, filename)
 
 kml_test <- st_read(test_file, stringsAsFactors = FALSE)
 kml_desc <- kml_test$Description[3]
-kml_table_list <- kml_desc %>%
+track_attribute_list <- kml_desc %>%
   read_html() %>%
   html_nodes("table") %>%
-  html_table()
+  html_table() %>% 
+  map(~ mutate(., X1 = snakecase::to_snake_case(X1))) %>% 
+  map(deframe) %>% 
+  map(as.list) %>% 
+  setNames(c("summary", "start", "end"))
+
+track_attribute_list$summary$date
+track_attribute_list$start$start_time
