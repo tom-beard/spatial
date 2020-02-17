@@ -23,10 +23,11 @@ all_file_paths <- tibble(path = all_files) %>%
 all_file_paths %>% count(ext)
 
 img_file_paths <- all_file_paths %>% 
-  filter(ext %in% c("JPG", "HEIC")) %>% 
+  filter(ext %in% c("JPG", "HEIC", "MOV", "MP4")) %>% 
   pull(path)
 
 img_info_df <- read_exif(img_file_paths)
+
 img_info_df %>%
   glimpse()
 img_info_df %>%
@@ -34,7 +35,5 @@ img_info_df %>%
   glimpse()
 
 img_info_df %>%
-  filter(!is.na(GPSLongitude)) %>% 
-  count(FileTypeExtension)
-img_info_df %>%
-  count(FileTypeExtension)
+  mutate(has_gps = !is.na(GPSLongitude)) %>% 
+  tabyl(FileTypeExtension, has_gps)
