@@ -1,6 +1,7 @@
 library(tidyverse)
 library(fs)
 library(raster)
+library(rayshader)
 
 
 # common functions etc ----------------------------------------------------
@@ -42,7 +43,7 @@ localtif %>% plot()
 
 pop_df %>% mutate(per_acre = value / sqkm_to_acre) %>% pull(per_acre) %>% max()
 
-# crop to Auckland
+# crop to Auckland/Waikato
 
 ak_extent <- extent(174, 176.5, -38, -36.5)
 ak_tiff <- crop(localtif, ak_extent)
@@ -58,3 +59,9 @@ ak_df %>%
   labs(x = "population per square km", y = "", title = "") +
   theme_minimal() +
   theme(panel.grid.minor = element_blank())
+
+# crop to central Auckland
+
+localtif %>%
+  crop(extent(174.7, 175, -37, -36.8)) %>% 
+  plot()
