@@ -1,18 +1,15 @@
 library(tidyverse)
-library(rayshader)
 library(fs)
 library(raster)
 
-# attempt reading GHS GeoTIFF ------------------------------------------------
 
-geotiff_path <- "D:/GIS/ghs-pop"
-geotiff_file <- "GHS_POP_E2015_GLOBE_R2019A_4326_9ss_V1_0_35_12.tif"
+# common functions etc ----------------------------------------------------
 
-localtif <- raster::raster(path(geotiff_path, geotiff_file))
+sqkm_to_acre <- 247.105
 
 tiff_to_matrix <- function(localtif) {
   matrix(raster::extract(localtif, raster::extent(localtif), buffer = 1000),
-                  nrow = ncol(localtif), ncol = nrow(localtif))
+         nrow = ncol(localtif), ncol = nrow(localtif))
 }
 
 popmatrix_to_tibble <- function(pop_matrix) {
@@ -22,6 +19,13 @@ popmatrix_to_tibble <- function(pop_matrix) {
     pivot_longer(-row, names_to = "col", values_to = "value") %>% 
     drop_na(value)
 }
+
+# reading GHS GeoTIFF ------------------------------------------------
+
+geotiff_path <- "D:/GIS/ghs-pop"
+geotiff_file <- "GHS_POP_E2015_GLOBE_R2019A_4326_9ss_V1_0_35_12.tif"
+
+localtif <- raster::raster(path(geotiff_path, geotiff_file))
 
 pop_matrix <- tiff_to_matrix(localtif)
 pop_df <- popmatrix_to_tibble(pop_matrix)
@@ -36,7 +40,6 @@ pop_df %>%
 
 localtif %>% plot()
 
-sqkm_to_acre <- 247.105
 pop_df %>% mutate(per_acre = value / sqkm_to_acre) %>% pull(per_acre) %>% max()
 
 # crop to Auckland
