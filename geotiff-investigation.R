@@ -55,24 +55,3 @@ ak_df %>%
   labs(x = "population per square km", y = "", title = "") +
   theme_minimal() +
   theme(panel.grid.minor = element_blank())
-
-# pop_matrix_combined <- cbind(pop_matrix, pop_matrix2)
-
-raymat <- ray_shade(ak_matrix)
-ambmat <- ambient_shade(ak_matrix)
-
-ak_matrix %>%
-  sphere_shade(texture = "imhof2") %>%
-  # add_water(detect_water(ak_matrix), color = "steelblue") %>%
-  add_shadow(raymat) %>%
-  add_shadow(ambmat) %>%
-  plot_map()
-
-ak_matrix %>%
-  sphere_shade(texture = "imhof2") %>%
-  # add_water(detect_water(ak_matrix), color = "steelblue") %>%
-  add_shadow(raymat) %>%
-  add_shadow(ambmat) %>%
-  plot_3d(ak_matrix, zscale = 1, fov = 0, theta = 135, zoom = 0.75, phi = 45,
-          windowsize = c(1000, 800))
-
