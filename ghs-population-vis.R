@@ -1,4 +1,4 @@
-# investigating data and approach at http://www.statsmapsnpix.com/2020/04/population-density-in-europe.html
+# investigating the data and vis approach at http://www.statsmapsnpix.com/2020/04/population-density-in-europe.html
 
 library(tidyverse)
 library(rayshader)
