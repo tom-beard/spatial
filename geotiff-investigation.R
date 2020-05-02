@@ -3,50 +3,76 @@ library(rayshader)
 library(fs)
 library(raster)
 
-# attempt reading LINZ DEM ------------------------------------------------
+# attempt reading GHS GeoTIFF ------------------------------------------------
 
-dem_path <- "D:/GIS/wellington/lds-wellington-lidar-1m-dem-2013-GTiff"
-dem_file <- "DEM_BQ31_2013_1000_2139.tif"
+geotiff_path <- "D:/GIS/ghs-pop"
+geotiff_file <- "GHS_POP_E2015_GLOBE_R2019A_4326_9ss_V1_0_35_12.tif"
 
-localtif <- raster::raster(path(dem_path, dem_file))
+localtif <- raster::raster(path(geotiff_path, geotiff_file))
 
-elmat <- matrix(raster::extract(localtif, raster::extent(localtif), buffer = 1000),
-                nrow = ncol(localtif), ncol = nrow(localtif))
+tiff_to_matrix <- function(localtif) {
+  matrix(raster::extract(localtif, raster::extent(localtif), buffer = 1000),
+                  nrow = ncol(localtif), ncol = nrow(localtif))
+}
 
-dem_file2 <- "DEM_BQ31_2013_1000_2140.tif"
-localtif2 <- raster::raster(path(dem_path, dem_file2))
+popmatrix_to_tibble <- function(pop_matrix) {
+  pop_matrix %>% 
+    as_tibble() %>% 
+    rownames_to_column("row") %>% 
+    pivot_longer(-row, names_to = "col", values_to = "value") %>% 
+    drop_na(value)
+}
 
-elmat2 <- matrix(raster::extract(localtif2, raster::extent(localtif2), buffer = 1000),
-                 nrow = ncol(localtif2), ncol = nrow(localtif2))
+pop_matrix <- tiff_to_matrix(localtif)
+pop_df <- popmatrix_to_tibble(pop_matrix)
 
-elmat_combined <- cbind(elmat, elmat2)
-
-raymat <- ray_shade(elmat)
-ambmat <- ambient_shade(elmat)
-
-elmat %>%
-  sphere_shade(texture = "imhof2") %>%
-  add_water(detect_water(elmat), color = "steelblue") %>%
-  add_shadow(raymat) %>%
-  add_shadow(ambmat) %>%
-  plot_map()
-
-elmat %>%
-  sphere_shade(texture = "imhof2") %>%
-  add_water(detect_water(elmat), color = "steelblue") %>%
-  add_shadow(raymat) %>%
-  add_shadow(ambmat) %>%
-  plot_3d(elmat, zscale = 1, fov = 0, theta = 135, zoom = 0.75, phi = 45,
-          windowsize = c(1000, 800))
-
-elmat %>% 
-  as_tibble() %>% 
-  rownames_to_column("row") %>% 
-  pivot_longer(-row, names_to = "col", values_to = "value") %>% 
+pop_df %>% 
   ggplot() +
   geom_histogram(aes(x = value)) +
+  scale_x_log10() +
   labs(x = "", y = "", title = "") +
   theme_minimal() +
   theme(panel.grid.minor = element_blank())
 
-localtif %>% plot()  
+localtif %>% plot()
+
+sqkm_to_acre <- 247.105
+pop_df %>% mutate(per_acre = value / sqkm_to_acre) %>% pull(per_acre) %>% max()
+
+# crop to Auckland
+
+ak_extent <- extent(174, 176.5, -38, -36.5)
+ak_tiff <- crop(localtif, ak_extent)
+ak_tiff %>% plot()
+
+ak_matrix <- tiff_to_matrix(ak_tiff)
+ak_df <- popmatrix_to_tibble(ak_matrix)
+
+ak_df %>% 
+  ggplot() +
+  geom_histogram(aes(x = value)) +
+  scale_x_log10(breaks = c(1/100, 1, 100, 1000), labels = c("1/100", 1, 100, 1000)) +
+  labs(x = "population per square km", y = "", title = "") +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank())
+
+# pop_matrix_combined <- cbind(pop_matrix, pop_matrix2)
+
+raymat <- ray_shade(ak_matrix)
+ambmat <- ambient_shade(ak_matrix)
+
+ak_matrix %>%
+  sphere_shade(texture = "imhof2") %>%
+  # add_water(detect_water(ak_matrix), color = "steelblue") %>%
+  add_shadow(raymat) %>%
+  add_shadow(ambmat) %>%
+  plot_map()
+
+ak_matrix %>%
+  sphere_shade(texture = "imhof2") %>%
+  # add_water(detect_water(ak_matrix), color = "steelblue") %>%
+  add_shadow(raymat) %>%
+  add_shadow(ambmat) %>%
+  plot_3d(ak_matrix, zscale = 1, fov = 0, theta = 135, zoom = 0.75, phi = 45,
+          windowsize = c(1000, 800))
+
