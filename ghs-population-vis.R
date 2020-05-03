@@ -76,3 +76,33 @@ export_3d_pop <- function(localtif, cropped_extent, output_filename) {
 
 export_3d_pop(localtif, extent(174, 176.5, -38.5, -36.5), "auckland-waikato")
 export_3d_pop(localtif, extent(174.3, 176.7, -41.8, -39.8), "wellington")
+
+
+# animation ---------------------------------------------------------------
+
+# to do: turn core cropping and shading code into a function
+cropped_extent <- extent(174, 176.5, -38.5, -36.5)
+output_filename <- "auckland-waikato"
+
+cropped_tiff <- crop(localtif, cropped_extent)
+cropped_tiff %>% plot()
+
+cropped_matrix <- tiff_to_matrix(cropped_tiff)
+max_pop_value <- cropped_matrix %>% popmatrix_to_tibble() %>% pull(value) %>% max()
+
+raymat <- ray_shade(cropped_matrix)
+ambmat <- ambient_shade(cropped_matrix)
+pop_overlay <- height_shade(raster_to_matrix(cropped_tiff),
+                            texture = viridis(100, option = "A", begin = 0,
+                                              end = max_pop_value / max_pop_value_nz))
+
+cropped_matrix %>%
+  sphere_shade(texture = "imhof1") %>%
+  add_shadow(raymat) %>%
+  add_shadow(ambmat) %>%
+  add_overlay(pop_overlay, alphalayer = 0.8, alphamethod = "multiply") %>% 
+  plot_3d(cropped_matrix, solid = FALSE, shadowdepth = -5, lineantialias = TRUE, linewidth = 0,
+          zscale = 10, fov = 0, theta = 0, zoom = 0.25, phi = 15,
+          windowsize = c(100, 100, 1600, 700))
+render_movie(filename = here::here(paste0(output_filename, "_anim")))
+
