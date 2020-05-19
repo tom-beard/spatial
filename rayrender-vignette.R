@@ -87,3 +87,36 @@ generate_cornell() %>%
                aperture = 0, fov = 40, samples = 1000,
                ambient_light = FALSE, parallel = TRUE, width = 800, height = 800,
                clamp_value = 5)
+
+
+# Venice with pig ---------------------------------------------------------
+
+tempfilehdr <- tempfile(fileext = ".hdr")
+download.file("https://www.tylermw.com/data/venice_sunset_2k.hdr", tempfilehdr)
+
+# Create star polygon
+angles <- seq(0, 360, by = 36)
+xx <- rev(c(rep(c(1, 0.5), 5), 1) * sinpi(angles / 180))
+yy <- rev(c(rep(c(1, 0.5), 5), 1) * cospi(angles / 180))
+star_polygon <- tibble::tibble(x = xx, y = yy)
+hollow_star <- rbind(star_polygon, 0.8 * star_polygon)
+
+generate_ground(material = diffuse(color = "grey20", checkercolor = "grey50", sigma = 90)) %>%
+  add_object(sphere(material = metal())) %>%
+  add_object(obj_model(y = -1, x = -1.8,
+                       r_obj(),
+                       angle = c(0, 135, 0),
+                       material = diffuse(sigma = 90))) %>%
+  add_object(pig(x = 1.8, y = -1.2,
+                 scale = 0.5, angle = c(0, 90, 0),
+                 diffuse_sigma = 90)) %>%
+  add_object(extruded_polygon(hollow_star,
+                              top = -0.5, bottom = -1, z = -2,
+                              holes = nrow(star_polygon),
+                              material = diffuse(color = "red", sigma = 90))) %>%
+  render_scene(parallel = TRUE, environment_light = tempfilehdr,
+               width = 800, height = 800,
+               fov = 70, clamp_value = 10, samples = 1000, aperture = 0.1,
+               lookfrom = c(-0.9, 1.2, -4.5),
+               lookat = c(0, -1, 0))
+
