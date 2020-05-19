@@ -124,3 +124,22 @@ generate_ground(material = diffuse(color = "grey20", checkercolor = "grey50", si
                lookfrom = c(-0.9, 1.2, -4.5),
                lookat = c(0, -1, 0))
 
+
+# simple purrr::map example --------------------------------------------------
+
+library(tidyverse)
+
+base_scene <- generate_ground() %>%
+  add_object(sphere(y = 5, z = 5, x = 5, radius = 3,
+                    material = light(intensity = 10)))
+
+default_mat <- diffuse(color = "#ff0000", sigma = 100)
+sphere_at <- function(y_pos) sphere(x = 0, y = y_pos, z = 0, radius = 0.2, material = default_mat)
+
+balls <- seq(from = -1, to = 1, by = 0.5) %>%
+  map_dfr(sphere_at)
+
+scene <- base_scene %>% 
+  add_object(balls)
+  
+render_scene(scene, parallel = TRUE, width = 800, height = 800, samples = 1000)
