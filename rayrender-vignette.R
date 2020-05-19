@@ -91,6 +91,9 @@ generate_cornell() %>%
 
 # Venice with pig ---------------------------------------------------------
 
+# this seems to crash Windows every time!
+# try ewithout environment_light
+
 tempfilehdr <- tempfile(fileext = ".hdr")
 download.file("https://www.tylermw.com/data/venice_sunset_2k.hdr", tempfilehdr)
 
@@ -114,7 +117,8 @@ generate_ground(material = diffuse(color = "grey20", checkercolor = "grey50", si
                               top = -0.5, bottom = -1, z = -2,
                               holes = nrow(star_polygon),
                               material = diffuse(color = "red", sigma = 90))) %>%
-  render_scene(parallel = TRUE, environment_light = tempfilehdr,
+  # render_scene(parallel = TRUE, environment_light = tempfilehdr,
+  render_scene(parallel = TRUE,
                width = 800, height = 800,
                fov = 70, clamp_value = 10, samples = 1000, aperture = 0.1,
                lookfrom = c(-0.9, 1.2, -4.5),
