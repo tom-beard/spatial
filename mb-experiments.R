@@ -1,4 +1,4 @@
-# just a quick test of meshblock reading, joing and visualising
+# just a quick test of meshblock reading, joining and visualising
 
 library(sf)
 library(tidyverse)
