@@ -3,12 +3,6 @@
 library(sf)
 library(tidyverse)
 
-test_sf <- st_read("D:/GIS/census/Census 2013/GEDs_clipped_simplified_3.shp",
-                       quiet = TRUE)
-
-ggplot(test_sf) +
-  geom_sf(aes(fill = ged))
-
 path_to_shapefile <- "D:/GIS/census/Census 2013/ESRI_Shapefile_Digital_Boundaries_2014_High_Def_Clipped/MB2014_HD_Clipped_Wellington_region.shp"
 (mb_test <- st_read(path_to_shapefile,
                        quiet = TRUE))
