@@ -8,7 +8,7 @@ path_to_shapefile <- "D:/GIS/census/Census 2013/ESRI_Shapefile_Digital_Boundarie
                        quiet = TRUE))
 
 ggplot(mb_test) +
-  geom_sf(aes(fill = UA2014))
+  geom_sf(aes(fill = UA2014_NAM))
 
 path_to_mb_data <- "D:/GIS/census/Census 2013/2013_mb_dataset_Total_New_Zealand_CSV/mb2013_indiv1.csv"
 
