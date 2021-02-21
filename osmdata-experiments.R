@@ -70,13 +70,19 @@ library(gganimate)
 # transformr is required to tween sf layers
 # also, gifski is required for gifs
 
-local_osm$osm_lines %>%
+anim <- local_osm$osm_lines %>%
   mutate(maxspeed = as.integer(maxspeed), lanes = as.integer(lanes)) %>% 
   ggplot() +
-  geom_sf(aes(colour = maxspeed), size = 2) +
-  labs(x = "", y = "", title = "") +
+  geom_sf(aes(colour = maxspeed, group = seq_along(maxspeed)), size = 2.5) +
+  scale_color_viridis_c() +
+  labs(x = "", y = "", title = "Max speed <= {closest_state}km/h") +
   theme_minimal() +
   theme(panel.grid.minor = element_blank()) +
   transition_states(maxspeed)
 
-# well, it generates an animation, but it's not what we want!
+# shadow_mark() does the trick! Can even give a subtle fade to previous states
+animate(anim + enter_fade() + exit_fade() + shadow_mark(size = 2),
+        nframes = 50)
+
+
+
