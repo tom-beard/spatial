@@ -63,3 +63,20 @@ local_osm$osm_lines %>%
   theme_minimal() +
   theme(panel.grid.minor = element_blank())
 
+
+# (tentatively) try animation ---------------------------------------------
+
+library(gganimate)
+# transformr is required to tween sf layers
+# also, gifski is required for gifs
+
+local_osm$osm_lines %>%
+  mutate(maxspeed = as.integer(maxspeed), lanes = as.integer(lanes)) %>% 
+  ggplot() +
+  geom_sf(aes(colour = maxspeed), size = 2) +
+  labs(x = "", y = "", title = "") +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank()) +
+  transition_states(maxspeed)
+
+# well, it generates an animation, but it's not what we want!
