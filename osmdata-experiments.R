@@ -44,10 +44,6 @@ library(osmdata)
 library(tidyverse)
 library(sf)
 
-local_osm <- opq(bbox = 'wellington nz') %>%
-  add_osm_feature(key = 'highway', value = 'motorway') %>%
-  osmdata_sf()
-
 local_osm <- opq(bbox = 'whangarei nz') %>%
   add_osm_feature(key = 'highway', value = 'trunk') %>%
   osmdata_sf()
@@ -64,7 +60,7 @@ local_osm$osm_lines %>%
   theme(panel.grid.minor = element_blank())
 
 
-# (tentatively) try animation ---------------------------------------------
+# try animation ---------------------------------------------
 
 library(gganimate)
 # transformr is required to tween sf layers
