@@ -30,5 +30,35 @@ focus_highways$osm_lines %>%
   coord_sf() +
   theme_minimal()
 
-# not sure what the polygons are!
+# not sure what the polygons are: at least one is a loop track, that should be lines
+
+# create highway buffer ---------------------------------------------------
+
+focus_highways$osm_lines %>% glimpse()
+
+highway_buffers <- focus_highways$osm_lines %>% 
+  select(geometry) %>% 
+  st_transform(crs = 2193) %>% 
+  mutate(buffer = st_buffer(geometry, dist = 50)) %>% 
+  st_set_geometry("buffer") %>% 
+  select(-geometry) %>% 
+  summarise()
+
+buffers_by_mb <- focus_mb_geom %>% 
+  select(MB2014) %>% 
+  st_transform(crs = 2193) %>% 
+  st_intersection(highway_buffers) %>% 
+  left_join(focus_mb_geom %>% as_tibble() %>% select(MB2014, AU2014_NAM), by = "MB2014")
+
+AU_subset <- c("Kensington", "Mairtown", "Regent")
+
+buffers_by_mb %>% 
+  filter(AU2014_NAM %in% AU_subset) %>% 
+  ggplot() +
+  geom_sf(data = focus_mb_geom %>% filter(AU2014_NAM %in% AU_subset),
+          fill = "grey80", colour = "white", size = 0.2) +
+  geom_sf(fill = "blue", colour = NA, alpha = 0.3) +
+  labs(x = "", y = "", title = "") +
+  coord_sf() +
+  theme_minimal()
 
