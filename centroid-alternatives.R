@@ -21,6 +21,8 @@ focus_highways <- opq(bbox = 'whangarei nz') %>%
   add_osm_feature(key = 'highway') %>%
   osmdata_sf()
 
+# ideally, we'd filter out highways that are unlikley to be the source of journeys, such as trunk
+
 focus_highways$osm_lines %>%
   mutate(maxspeed = as.integer(maxspeed), lanes = as.integer(lanes)) %>% 
   ggplot() +
@@ -29,7 +31,7 @@ focus_highways$osm_lines %>%
   geom_sf(data = focus_highways$osm_polygons, fill = "red") +
   theme_void()
 
-# not sure what the polygons are: at least one is a loop track, that should be lines
+# not sure what the polygons are: at least one is a loop track, which should be lines
 
 # create highway buffer ---------------------------------------------------
 
@@ -110,3 +112,7 @@ buffers_by_mb %>%
   geom_sf(data = prep_centroids(buffer_centroids), colour = "darkgreen", alpha = 0.8) +
   geom_sf(data = prep_centroids(buffer_point_on_surface), colour = "green", alpha = 0.8) +
   theme_void()
+
+# next steps:
+# - look for more edge cases
+# - try pole of inaccessibility (https://jolars.github.io/polylabelr/)
