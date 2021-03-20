@@ -11,19 +11,17 @@ library(sf)
 library(glue)
 library(fs)
 library(osmdata) # for local use, read from local files instead
+library(janitor)
+
+
+# get and examine OSM data ------------------------------------------------------------
 
 local_osm <- opq(bbox = 'whangarei nz') %>%
-  # add_osm_feature(key = 'highway', value = 'trunk') %>%
   osmdata_sf()
 # takes ~1 min on laptop. resulting object ~1.2GB, but we want to get water objects etc as well as streets
 
 local_osm$osm_lines %>% class() # sf and data.frame, but not tbl!
 local_osm$osm_lines %>% glimpse()
-local_osm$osm_lines %>% 
-  filter(highway == "trunk") %>% 
-  glimpse()
-
-local_osm$osm_lines %>% pull(highway) %>% unique() %>% sort()
 
 highway_sizes <- tibble::tribble(
   ~highway, ~highway_group, ~size,
@@ -41,18 +39,41 @@ highway_sizes <- tibble::tribble(
   "living_street",        "small",   0.2,
   "unclassified",        "small",   0.2,
   "service",        "small",   0.2,
+  "steps",        "small",   0.2,
+  "pedestrian",        "small",   0.2,
   "footway",        "small",   0.2
 )
 
 local_osm$osm_lines %>%
+  as.data.frame() %>%
+  count(highway, sort = TRUE) %>% 
+  left_join(highway_sizes, by = "highway")
+
+# prepare layers ----------------------------------------------------------
+
+small_roads <- local_osm$osm_lines %>%
   filter(highway %in%
            (highway_sizes %>%
-              filter(highway_group %in% c("large", "medium", "small")) %>%
+              filter(highway_group %in% c("small")) %>%
               pull(highway))
-         ) %>%
-  mutate(maxspeed = as.integer(maxspeed), lanes = as.integer(lanes)) %>% 
+  ) %>%
+  select(name, highway) %>% 
+  mutate(road_length = st_length(.) %>% units::set_units(km) %>% as.numeric())
+# useful tips: st_ calculations can take "." as an argument in a pipe; units:set_units is your friend!
+
+urban_bbox <- st_bbox(small_roads) %>%
+  st_as_sfc() %>% 
+  st_as_sf() %>% 
+  st_transform(crs = 2193) %>% 
+  st_buffer(dist = 500) %>%
+  st_transform(crs = 4326) %>% 
+  st_bbox()
+
+small_roads %>% 
   ggplot() +
-  geom_sf(aes(colour = maxspeed), size = 1) +
+  geom_sf(colour = "grey80", size = .5) +
+  geom_sf(data = local_osm$osm_lines %>% filter(highway == "trunk") %>% st_crop(urban_bbox),
+          colour = "firebrick") +
   labs(x = "", y = "", title = "") +
   theme_minimal() +
   theme(panel.grid.minor = element_blank())
