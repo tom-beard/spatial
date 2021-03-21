@@ -90,6 +90,19 @@ all_water <- all_polygons %>% select(name, natural, water, waterway) %>%
   st_crop(urban_bbox) %>% 
   st_union()
 
+all_green <- all_polygons %>% select(name, natural, landuse) %>% 
+  bind_rows(all_multipolygons %>% select(name, natural, landuse)) %>% 
+  filter(landuse %in% c("forest", "grass", "recreation_ground") |
+           natural %in% c("wood", "scrub", "grassland")) %>% 
+  st_crop(urban_bbox) %>% 
+  st_union()
+
+all_urban <- all_polygons %>% select(name, landuse) %>% 
+  bind_rows(all_multipolygons %>% select(name, landuse)) %>% 
+  filter(landuse %in% c("residential", "commercial", "industrial", "retail")) %>% 
+  st_union() %>% 
+  st_crop(urban_bbox)
+
 # prepare layers ----------------------------------------------------------
 
 filter_highways <- function(input_sf, highway_groups = c("small")) {
@@ -119,7 +132,7 @@ st_bbox_with_buffer <- function(input_sf, buffer_m = 10) {
     st_bbox()
 }
 
-# function to add road layer ----------------------------------------------
+# use function to add road layer ----------------------------------------------
 
 geom_road <- function(road_type, ...) {
   geom_sf(data = filter_highways(all_lines, road_type), ...)
@@ -127,12 +140,17 @@ geom_road <- function(road_type, ...) {
 
 ggplot() +
   geom_sf(data = all_water, fill = "steelblue", colour = NA, alpha = 0.5) +
-  geom_road("small", colour = "grey70", size = .1) +
-  geom_road("medium", colour = "grey50", size = .3) +
-  geom_road("large", colour = "grey40", size = .5) +
+  geom_sf(data = all_green, fill = "darkgreen", colour = NA, alpha = 0.2) +
+  geom_sf(data = all_urban, fill = "grey50", colour = NA, alpha = 0.2) +
+  geom_road("small", colour = "grey70", size = .2) +
+  geom_road("medium", colour = "grey50", size = .5) +
+  geom_road("large", colour = "grey40", size = 1) +
   labs(x = "", y = "", title = "") +
   coord_sf(expand = FALSE) +
   theme_void() +
   theme(
     panel.background = element_rect(fill = "grey90", colour = "grey90")
   )
+
+# green land use colour sor of works as is, but probably won't as a basemap for choropleths
+
