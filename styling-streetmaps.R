@@ -142,7 +142,7 @@ geom_road <- function(road_type, ...) {
   geom_sf(data = filter_highways(all_lines, road_type), ...)
 }
 
-ggplot() +
+base_map <- ggplot() +
   geom_sf(data = all_water, fill = "steelblue", colour = NA, alpha = 0.5) +
   geom_sf(data = all_green, fill = "darkgreen", colour = NA, alpha = 0.2) +
   geom_sf(data = all_urban, fill = "grey50", colour = NA, alpha = 0.2) +
@@ -155,6 +155,73 @@ ggplot() +
   theme(
     panel.background = element_rect(fill = "grey90", colour = "grey90")
   )
+base_map
 
-# green land use colour sor of works as is, but probably won't as a basemap for choropleths
+# green land use colour sort of works as is, but probably won't as a basemap for choropleths
+
+
+# prepare meshblocks for choropleth tests ---------------------------------
+
+path_to_shapefile <- "D:/GIS/census/Census 2013/ESRI_Shapefile_Digital_Boundaries_2014_High_Def_Clipped/MB2014_HD_Clipped.shp"
+path_to_mb_data <- "D:/GIS/census/Census 2013/2013_mb_dataset_Total_New_Zealand_CSV/mb2013_indiv1.csv"
+
+mb_df <- read_csv(path_to_mb_data) %>% select(1:6)
+
+mb_geom <- st_read(path_to_shapefile,
+                    quiet = TRUE) %>% 
+  filter(UA2014_NAM == "Whangarei") %>% 
+  left_join(mb_df, by = c("MB2014" = "Code")) %>% 
+  mutate(pop_density = `2013_Census_census_usually_resident_population_count(1)` / SHAPE_Area) %>% 
+  st_transform(crs = 4326) %>% 
+  st_crop(urban_bbox)
+
+# basemap with choropleth -------------------------------------------------
+
+ggplot() +
+  geom_sf(data = all_water, fill = "steelblue", colour = NA, alpha = 0.5) +
+  # geom_sf(data = all_green, fill = "darkgreen", colour = NA, alpha = 0.2) +
+  geom_sf(data = all_urban, fill = "grey50", colour = NA, alpha = 0.2) +
+  geom_sf(data = mb_geom %>% filter(pop_density > 0.5e-03),
+          aes(fill = pop_density),
+          colour = NA, alpha = 1) +
+  scale_fill_distiller(palette = "YlOrRd", direction = 1) +
+  geom_road("small", colour = "grey70", size = .2) +
+  geom_road("medium", colour = "grey50", size = .5) +
+  geom_road("large", colour = "grey40", size = 1) +
+  labs(x = "", y = "", title = "") +
+  coord_sf(expand = FALSE) +
+  theme_void() +
+  theme(
+    panel.background = element_rect(fill = "grey90", colour = "grey90")
+  )
+
+# notes:
+# better without green areas
+# roads are better on top of choropleths
+# palette should start with lighter colours
+
+ggplot() +
+  geom_sf(data = all_water, fill = "steelblue", colour = NA, alpha = 0.8) +
+  # geom_sf(data = all_green, fill = "darkgreen", colour = NA, alpha = 0.2) +
+  geom_sf(data = all_urban, fill = "grey50", colour = NA, alpha = 0.2) +
+  geom_sf(data = mb_geom %>% filter(pop_density > 0.5e-03),
+          aes(fill = pop_density),
+          colour = NA, alpha = 1) +
+  # scale_fill_distiller(palette = "YlOrRd", direction = -1) +
+  scale_fill_viridis_c(option = "B") +
+  geom_road("small", colour = "grey30", size = .2) +
+  geom_road("medium", colour = "grey40", size = .5) +
+  geom_road("large", colour = "grey50", size = 1) +
+  labs(x = "", y = "", title = "") +
+  coord_sf(expand = FALSE) +
+  theme_void() +
+  theme(
+    panel.background = element_rect(fill = "grey20", colour = "grey20")
+  )
+
+# notes:
+# viridis palettes work better against dark backgrounds, but lowest values are still too dark
+
+
+
 
