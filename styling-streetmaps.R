@@ -103,6 +103,10 @@ all_urban <- all_polygons %>% select(name, landuse) %>%
   st_union() %>% 
   st_crop(urban_bbox)
 
+all_polygons %>% as_tibble() %>% count(highway, junction)
+# note: several highways appear as polygons
+# a few walkways etc, but mostly roundabouts
+
 # prepare layers ----------------------------------------------------------
 
 filter_highways <- function(input_sf, highway_groups = c("small")) {

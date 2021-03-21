@@ -80,24 +80,3 @@ anim <- local_osm$osm_lines %>%
 animate(anim + enter_fade() + exit_fade() + shadow_mark(size = 2),
         nframes = 50)
 
-# highway styling
-
-whangarei_base <- osm_base %>%
-  st_join(summarise(pseudo_accessibility_sf), left = FALSE, join = st_within) %>% 
-  mutate(hway_category = case_when(
-    highway %in% c("trunk", "trunk_link", "primary", "secondary", "secondary_link") ~ "main",
-    highway %in% c("residential") ~ "residential",
-    TRUE ~ "other"
-  ))
-
-whangarei_base %>% 
-  ggplot() +
-  geom_sf(data = pseudo_accessibility_sf, aes(fill = reachable_area), alpha = 1) +
-  geom_sf(aes(colour = factor(hway_category)),
-          size = .5) +
-  scale_fill_viridis_c(option = "A") +
-  scale_color_manual(values = c("main" = "white", "residential" = "grey50", "other" = "grey20")) +
-  labs(x = "", y = "", title = "") +
-  theme_minimal() +
-  theme(panel.grid.minor = element_blank(), panel.spacing = unit(2, "lines"))
-
