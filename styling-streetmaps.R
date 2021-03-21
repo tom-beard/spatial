@@ -223,5 +223,38 @@ ggplot() +
 # viridis palettes work better against dark backgrounds, but lowest values are still too dark
 
 
+# small multiples ---------------------------------------------------------
 
+# mock up data
+mb_range <- mb_geom$MB2014 %>% as.numeric() %>% range()
+density_range <- mb_geom$pop_density %>% as.numeric() %>% range()
 
+mock_stats <- mb_geom %>% 
+  filter(pop_density > 0.5e-03) %>% 
+  select(MB2014, v_1 = pop_density) %>% 
+  mutate(MB2014 = as.numeric(MB2014)) %>% 
+  mutate(v_2 = density_range[2] - v_1,
+         v_3 = v_1 * (MB2014 - mb_range[1]) / diff(mb_range),
+         v_4 = v_2 * (MB2014 - mb_range[1]) / diff(mb_range)
+  ) %>% 
+  pivot_longer(starts_with("v_"), names_to = "var")
+
+mock_stats %>% count(var)
+
+ggplot() +
+  geom_sf(data = all_water, fill = "steelblue", colour = NA, alpha = 0.8) +
+  geom_sf(data = all_urban, fill = "grey50", colour = NA, alpha = 0.2) +
+  geom_sf(data = mock_stats,
+          aes(fill = value),
+          colour = NA, alpha = 1) +
+  scale_fill_viridis_c(option = "B") +
+  geom_road("small", colour = "grey30", size = .2) +
+  geom_road("medium", colour = "grey40", size = .5) +
+  geom_road("large", colour = "grey50", size = 1) +
+  facet_wrap(~ mock_stats$var) +
+  labs(x = "", y = "", title = "") +
+  coord_sf(expand = FALSE) +
+  theme_void() +
+  theme(
+    panel.background = element_rect(fill = "grey20", colour = "grey20")
+  )
