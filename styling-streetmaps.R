@@ -231,30 +231,35 @@ density_range <- mb_geom$pop_density %>% as.numeric() %>% range()
 
 mock_stats <- mb_geom %>% 
   filter(pop_density > 0.5e-03) %>% 
+  as_tibble() %>% 
   select(MB2014, v_1 = pop_density) %>% 
-  mutate(MB2014 = as.numeric(MB2014)) %>% 
-  mutate(v_2 = density_range[2] - v_1,
-         v_3 = v_1 * (MB2014 - mb_range[1]) / diff(mb_range),
-         v_4 = v_2 * (MB2014 - mb_range[1]) / diff(mb_range)
+  mutate(MB = as.numeric(MB2014)) %>% 
+  mutate(v_2 = (density_range[2] - v_1) *.6,
+         v_3 = v_1 * (MB - mb_range[1]) / diff(mb_range),
+         v_4 = v_2 * (MB - mb_range[1]) / diff(mb_range)
   ) %>% 
-  pivot_longer(starts_with("v_"), names_to = "var")
+  pivot_longer(starts_with("v_"), names_to = "threshold", names_prefix = "v_") %>% 
+  select(-MB) %>% 
+  mutate(threshold = as.numeric(threshold) * 15)
 
-mock_stats %>% count(var)
+mock_stats_sf <- mb_geom %>% 
+  inner_join(mock_stats, by = "MB2014")
 
-ggplot() +
+ggplot(mock_stats_sf) +
   geom_sf(data = all_water, fill = "steelblue", colour = NA, alpha = 0.8) +
   geom_sf(data = all_urban, fill = "grey50", colour = NA, alpha = 0.2) +
-  geom_sf(data = mock_stats,
-          aes(fill = value),
+  geom_sf(aes(fill = value),
           colour = NA, alpha = 1) +
   scale_fill_viridis_c(option = "B") +
   geom_road("small", colour = "grey30", size = .2) +
   geom_road("medium", colour = "grey40", size = .5) +
   geom_road("large", colour = "grey50", size = 1) +
-  facet_wrap(~ mock_stats$var) +
+  facet_wrap(~ threshold) +
   labs(x = "", y = "", title = "") +
   coord_sf(expand = FALSE) +
   theme_void() +
   theme(
-    panel.background = element_rect(fill = "grey20", colour = "grey20")
+    panel.background = element_rect(fill = "grey20", colour = "grey20"),
+    panel.spacing = unit(0.5, "lines"),
+    strip.text = element_text(margin = margin(b = 0.5, unit = "lines"))
   )
