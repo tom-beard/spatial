@@ -119,11 +119,17 @@ st_bbox_with_buffer <- function(input_sf, buffer_m = 10) {
     st_bbox()
 }
 
+# function to add road layer ----------------------------------------------
+
+geom_road <- function(road_type, ...) {
+  geom_sf(data = filter_highways(all_lines, road_type), ...)
+}
+
 ggplot() +
   geom_sf(data = all_water, fill = "steelblue", colour = NA, alpha = 0.5) +
-  geom_sf(data = filter_highways(all_lines, "small"), colour = "grey70", size = .1) +
-  geom_sf(data = filter_highways(all_lines, "medium"), colour = "grey50", size = .3) +
-  geom_sf(data = filter_highways(all_lines, "large"), colour = "grey40", size = .5) +
+  geom_road("small", colour = "grey70", size = .1) +
+  geom_road("medium", colour = "grey50", size = .3) +
+  geom_road("large", colour = "grey40", size = .5) +
   labs(x = "", y = "", title = "") +
   coord_sf(expand = FALSE) +
   theme_void() +
