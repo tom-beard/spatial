@@ -1,31 +1,24 @@
 ---
-title: "Hello world"
+title: "Storyboard Commentary"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
+    storyboard: true
 ---
 
-```{r setup, include=FALSE}
-library(flexdashboard)
-library(dygraphs)
-```
-
-
-### Lung Deaths (all)
+### Frame 1
 
 ```{r}
-dygraph(ldeaths)
 ```
 
-### Lung deaths (male)
+*** 
+
+Some commentary about Frame 1.
+
+### Frame 2 {data-commentary-width=400}
 
 ```{r}
-dygraph(mdeaths)
 ```
 
-### Lung deaths (female)
+*** 
 
-```{r}
-dygraph(fdeaths)
-```
-
+Some commentary about Frame 2.
