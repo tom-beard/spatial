@@ -3,34 +3,29 @@ title: "Hello world"
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
-    vertical_layout: fill
 ---
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
+library(dygraphs)
 ```
 
-Column {data-width=650}
------------------------------------------------------------------------
 
-### Chart A
+### Lung Deaths (all)
 
 ```{r}
-
+dygraph(ldeaths)
 ```
 
-Column {data-width=350}
------------------------------------------------------------------------
-
-### Chart B
+### Lung deaths (male)
 
 ```{r}
-
+dygraph(mdeaths)
 ```
 
-### Chart C
+### Lung deaths (female)
 
 ```{r}
-
+dygraph(fdeaths)
 ```
 
