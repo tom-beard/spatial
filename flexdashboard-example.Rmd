@@ -1,24 +1,42 @@
 ---
-title: "Storyboard Commentary"
+title: "Hello world"
 output: 
   flexdashboard::flex_dashboard:
-    storyboard: true
+    orientation: columns
 ---
 
-### Frame 1
-
-```{r}
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(crosstalk)
+library(d3scatter)
+library(leaflet)
+library(dygraphs)
+shared_mtcars <- SharedData$new(mtcars)
+shared_iris <- SharedData$new(iris)
+shared_quakes <- SharedData$new(quakes[sample(nrow(quakes), 100),])
 ```
 
-*** 
 
-Some commentary about Frame 1.
+### Quakes map
 
-### Frame 2 {data-commentary-width=400}
+Note: leaflet seems to cause crashes when interacting with other htmlwidgets within flexdashboard, but only within the RStudio viewer. Seems fine in Chrome.
 
 ```{r}
+leaflet(shared_quakes, width = "100%", height = 300) %>%
+    addTiles() %>%
+    addCircleMarkers()
 ```
 
-*** 
+### Depth vs magnitude
 
-Some commentary about Frame 2.
+```{r}
+d3scatter(shared_quakes, ~depth, ~mag, width = "100%", height = 300)
+```
+
+### Filters
+
+```{r}
+filter_slider("depth", "Depth", shared_quakes, ~depth, width = "100%")
+filter_slider("magnitude", "Magnitude", shared_quakes, ~mag, width = "100%")
+```
+
