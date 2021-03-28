@@ -14,8 +14,7 @@ library(reactable)
 library(sparkline)
 library(plotly)
 
-# shared_quakes <- SharedData$new(quakes[sample(nrow(quakes), 100),])
-shared_quakes <- highlight_key(quakes[sample(nrow(quakes), 100),])
+shared_quakes <- highlight_key(quakes[sample(nrow(quakes), 300),]) # leaflet doesn't handle full dataset
 ```
 
 Column {data-width=600}

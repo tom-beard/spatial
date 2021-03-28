@@ -1,0 +1,36 @@
+---
+title: "Testing crosstalk with sf polygons"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(flexdashboard)
+library(crosstalk)
+library(leaflet)
+library(sf)
+library(d3scatter)
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### Chart
+
+```{r}
+
+```
+
+Column {data-width=600}
+-----------------------------------------------------------------------
+
+### Map
+
+```{r}
+
+```
+
+
