@@ -1,5 +1,5 @@
 ---
-title: "Flexdashboard + crosstalk + leaflet"
+title: "Quake map: flexdashboard + crosstalk + leaflet"
 output: 
   flexdashboard::flex_dashboard
 ---
@@ -23,7 +23,7 @@ Column {data-width=600}
 
 ### Quakes map
 
-Note: leaflet seems to cause crashes when interacting with other htmlwidgets within flexdashboard, but only within the RStudio viewer. Seems fine in Chrome.
+<!-- Note: leaflet seems to cause crashes when interacting with other htmlwidgets within flexdashboard, but only within the RStudio viewer. Seems fine in Chrome. -->
 
 ```{r}
 leaflet(shared_quakes, width = "100%", height = 300) %>%
@@ -36,8 +36,10 @@ leaflet(shared_quakes, width = "100%", height = 300) %>%
 ```{r}
 # d3scatter(shared_quakes, ~depth, ~mag, width = "100%", height = 300)
 plot_ly(shared_quakes, x = ~depth, y = ~mag, color = ~stations) %>%
+  add_markers(alpha = 0.5) %>% 
+  highlight("plotly_selected") %>% 
   layout(dragmode = "select")
-# note: selection in plotly doesn't seem to work with crosstalk at this stage
+# note: filtering with sliders seems to override plotly's ability to affect reactable with brush 
 ```
 
 ### Filters
