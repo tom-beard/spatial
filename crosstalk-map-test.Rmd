@@ -26,11 +26,23 @@ mb_geom <- st_read(path_to_shapefile,
   mutate(pop_density = `2013_Census_census_usually_resident_population_count(1)` / SHAPE_Area) %>% 
   select(MB2014, pop_density,
          pop_2001 = `2001_Census_census_usually_resident_population_count(1)`,
-         pop_2013 = `2013_Census_census_usually_resident_population_count(1)`,
+         pop_2013 = `2013_Census_census_usually_resident_population_count(1)`
          ) %>% 
   st_transform(crs = 4326)
 
-shared_mb <- SharedData$new(mb_geom, key = ~MB2014)
+mb_centr <- mb_geom %>% 
+  mutate(geom2 = st_centroid(geometry)) %>% 
+  st_set_geometry("geom2") %>% 
+  select(-geometry)
+
+shared_mb_centr <- SharedData$new(mb_centr, key = ~MB2014)
+
+# the following is from https://stackoverflow.com/questions/42974140/crosstalk-filter-polylines-in-leaflet
+# but doesn't seem to work, maybe due to a new version of leaflet
+
+# shapes_to_filter <- mb_geom %>%as("Spatial")
+# sd_map <- SharedData$new(shapes_to_filter)
+# sd_df <- SharedData$new(as.data.frame(shapes_to_filter@data), group = sd_map$groupName())
 
 ```
 
@@ -40,7 +52,7 @@ Column {data-width=400}
 ### Chart
 
 ```{r}
-d3scatter(shared_mb, ~pop_2001, ~pop_2013, width = "100%")
+d3scatter(shared_mb_centr, ~pop_2001, ~pop_2013, width = "100%")
 ```
 
 Column {data-width=600}
@@ -49,11 +61,13 @@ Column {data-width=600}
 ### Map
 
 ```{r}
-leaflet(shared_mb) %>%
-  addTiles(group = "OSM") %>%
-  addPolygons(weight = 0.5)
+density_pal <- colorNumeric("magma", domain = mb_geom$pop_density)
 
-# no interaction so far
+leaflet(shared_mb_centr) %>%
+  addTiles(group = "OSM") %>%
+  addPolygons(data = mb_geom, weight = 0.3, fillOpacity = 0.8,
+              color = ~density_pal(pop_density)) %>%
+  addCircles(color = "red", radius = 1)
 
 ```
 
