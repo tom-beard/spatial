@@ -49,7 +49,8 @@ Column {data-width=400}
 ### Table
 
 ```{r}
-reactable(shared_quakes,
+reactable(shared_quakes, bordered = TRUE, striped = TRUE, highlight = TRUE, 
+          selection = "multiple", onClick = "select",
           columns = list(mag = colDef(name = "Magnitude"),
                          depth = colDef(name = "Depth"),
                          stations = colDef((name = "Num stations"))),
