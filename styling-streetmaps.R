@@ -99,10 +99,6 @@ all_green <- all_polygons %>% select(name, natural, landuse) %>%
   st_crop(urban_bbox) %>% 
   st_union()
 
-all_coast <- all_lines %>% 
-  filter(natural == "coastline")
-all_coast %>% glimpse()
-
 all_urban <- all_polygons %>% select(name, landuse) %>% 
   bind_rows(all_multipolygons %>% select(name, landuse)) %>% 
   filter(landuse %in% c("residential", "commercial", "industrial", "retail")) %>% 
@@ -125,6 +121,7 @@ filter_highways <- function(input_sf, highway_groups = c("small")) {
     select(name, highway)
 }
 
+# not used later
 small_roads <- all_lines %>%
   filter_highways("small") %>% 
   mutate(road_length = st_length(.) %>% units::set_units(km) %>% as.numeric())
@@ -268,4 +265,36 @@ ggplot(mock_stats_sf) +
     panel.background = element_rect(fill = "grey20", colour = "grey20"),
     panel.spacing = unit(0.5, "lines"),
     strip.text = element_text(margin = margin(b = 0.5, unit = "lines"))
+  )
+
+# larger maps and coastline -----------------------------------------------
+
+wider_water <- all_polygons %>% select(name, natural, water, waterway) %>% 
+  bind_rows(all_multipolygons %>% select(name, natural, water, waterway)) %>% 
+  filter(natural %in% c("water", "coastline", "bay") |
+           water %in% c("lake", "reservoir", "river") |
+           waterway %in% c("dam", "river", "riverbank"))
+
+all_coast <- all_lines %>% 
+  filter(natural == "coastline")
+all_coast %>% glimpse()
+
+ggplot() +
+  geom_sf(data = wider_water, fill = "steelblue", colour = NA, alpha = 0.8) +
+  # geom_sf(data = all_green, fill = "darkgreen", colour = NA, alpha = 0.2) +
+  geom_sf(data = all_urban, fill = "grey50", colour = NA, alpha = 0.2) +
+  geom_sf(data = all_coast, colour = "blue", alpha = 1) +
+  geom_sf(data = mb_geom %>% filter(pop_density > 0.5e-03),
+          aes(fill = pop_density),
+          colour = NA, alpha = 1) +
+  # scale_fill_distiller(palette = "YlOrRd", direction = -1) +
+  scale_fill_viridis_c(option = "B") +
+  geom_road("small", colour = "grey30", size = .2) +
+  geom_road("medium", colour = "grey40", size = .5) +
+  geom_road("large", colour = "grey50", size = 1) +
+  labs(x = "", y = "", title = "") +
+  coord_sf(expand = FALSE) +
+  theme_void() +
+  theme(
+    panel.background = element_rect(fill = "grey20", colour = "grey20")
   )
