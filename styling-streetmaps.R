@@ -5,6 +5,7 @@
 # https://www.dshkol.com/2018/better-maps-with-vector-tiles/
 # http://estebanmoro.org/post/2020-10-19-personal-art-map-with-r/
 # https://taraskaduk.com/posts/2021-01-18-print-street-maps/
+# https://cran.r-project.org/web/packages/osmplotr/vignettes/maps-with-ocean.html
 
 library(tidyverse)
 library(sf)
@@ -12,6 +13,7 @@ library(glue)
 library(fs)
 library(osmdata) # for local use, read from local files instead
 library(janitor)
+library(osmplotr)
 
 
 # get and examine OSM data ------------------------------------------------------------
@@ -96,6 +98,10 @@ all_green <- all_polygons %>% select(name, natural, landuse) %>%
            natural %in% c("wood", "scrub", "grassland")) %>% 
   st_crop(urban_bbox) %>% 
   st_union()
+
+all_coast <- all_lines %>% 
+  filter(natural == "coastline")
+all_coast %>% glimpse()
 
 all_urban <- all_polygons %>% select(name, landuse) %>% 
   bind_rows(all_multipolygons %>% select(name, landuse)) %>% 
