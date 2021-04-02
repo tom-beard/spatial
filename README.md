@@ -7,3 +7,4 @@ Further ideas and packages to pursue:
 * Interactive client-side dashboards with `flexdashboard` and `crosstalk` (https://nicar.r-journalism.com/docs/crosstalk-flexdashboard-leaflet-datatable/, or see example at https://matt-dray.github.io/earl18-crosstalk/04_leaflet-flexdash-dt-crosstalk.html)
 * Plotly for interactive leaflet-like maps (https://plotly.com/r/mapbox-layers/). Can it do brushing etc within Plotly?
 * Processing OSM layers to break up polygon roads into polylines, get sea/ocean geometry etc.
+* WebGL-based vis of large spatial data with deck.gl (https://github.com/crazycapivara/deckgl)
