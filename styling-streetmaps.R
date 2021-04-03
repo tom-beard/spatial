@@ -267,21 +267,30 @@ ggplot(mock_stats_sf) +
     strip.text = element_text(margin = margin(b = 0.5, unit = "lines"))
   )
 
-# larger maps and coastline -----------------------------------------------
+# maps and coastline for whole District -----------------------------------------------
 
-district_osm <- opq(bbox = 'whangarei district nz') %>%
+district_bbox <- getbb('whangarei district nz')
+district_bbox_st <- c(xmin = district_bbox["x", "min"], xmax = district_bbox["x", "max"],
+                      ymin = district_bbox["y", "min"], ymax = district_bbox["y", "max"])
+district_osm <- opq(bbox = district_bbox) %>%
   osmdata_sf()
 # takes ~2 mins on laptop. resulting object ~3.4GB, but we want to get water objects etc as well as streets
 
 district_lines <- district_osm$osm_lines
+district_highways <- district_lines %>% filter(!is.na(highway)) %>%
+  st_crop(district_bbox_st)
 district_polygons <- district_osm$osm_polygons
-district_multipolygons <- district_osm$osm_multipolygons
+district_multipolygons <- unname_osmdata_sf(district_osm)$osm_multipolygons # fixed named geometry object issue
+district_boundary <- district_multipolygons %>%
+  filter(name == "Whangarei District") %>% 
+  select(name, admin_level, population)
 
 district_water <- district_polygons %>% select(name, natural, water, waterway) %>% 
   bind_rows(district_multipolygons %>% select(name, natural, water, waterway)) %>% 
   filter(natural %in% c("water", "coastline", "bay") |
            water %in% c("lake", "reservoir", "river") |
-           waterway %in% c("dam", "river", "riverbank"))
+           waterway %in% c("dam", "river", "riverbank")) %>% 
+  st_crop(district_bbox_st)
 
 district_coast <- district_lines %>% 
   filter(natural == "coastline")
@@ -289,16 +298,18 @@ district_coast %>% janitor::remove_empty("cols") %>% glimpse()
 
 ggplot() +
   geom_sf(data = district_water, fill = "steelblue", colour = NA, alpha = 0.8) +
-  geom_sf(data = district_coast, colour = "blue", alpha = 1) +
+  geom_sf(data = district_boundary, colour = "red", fill = NA) +
+  # geom_sf(data = district_coast, colour = "blue", alpha = 1) +
   geom_sf(data = mb_geom %>% filter(pop_density > 0.5e-03),
           aes(fill = pop_density),
           colour = NA, alpha = 1) +
   scale_fill_viridis_c(option = "B") +
-  geom_sf(data = filter_highways(district_lines, "small"), colour = "grey30", size = 0.2) +
-  geom_sf(data = filter_highways(district_lines, "medium"), colour = "grey40", size = 0.5) +
-  geom_sf(data = filter_highways(district_lines, "large"), colour = "grey50", size = 1) +
+  geom_sf(data = filter_highways(district_highways, "small"), colour = "grey30", size = 0.2) +
+  geom_sf(data = filter_highways(district_highways, "medium"), colour = "grey40", size = 0.5) +
+  geom_sf(data = filter_highways(district_highways, "large"), colour = "grey50", size = 1) +
   labs(x = "", y = "", title = "") +
   coord_sf(expand = FALSE) +
+  # coord_sf(xlim = c(district_bbox["x", ]), ylim = c(district_bbox["y", ]), expand = FALSE) +
   theme_void() +
   theme(
     panel.background = element_rect(fill = "grey20", colour = "grey20")
