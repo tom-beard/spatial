@@ -269,25 +269,30 @@ ggplot(mock_stats_sf) +
 
 # larger maps and coastline -----------------------------------------------
 
-wider_water <- all_polygons %>% select(name, natural, water, waterway) %>% 
-  bind_rows(all_multipolygons %>% select(name, natural, water, waterway)) %>% 
+district_osm <- opq(bbox = 'whangarei district nz') %>%
+  osmdata_sf()
+# takes ~2 mins on laptop. resulting object ~3.4GB, but we want to get water objects etc as well as streets
+
+district_lines <- district_osm$osm_lines
+district_polygons <- district_osm$osm_polygons
+district_multipolygons <- district_osm$osm_multipolygons
+
+district_water <- district_polygons %>% select(name, natural, water, waterway) %>% 
+  bind_rows(district_multipolygons %>% select(name, natural, water, waterway)) %>% 
   filter(natural %in% c("water", "coastline", "bay") |
            water %in% c("lake", "reservoir", "river") |
            waterway %in% c("dam", "river", "riverbank"))
 
-all_coast <- all_lines %>% 
+district_coast <- district_lines %>% 
   filter(natural == "coastline")
-all_coast %>% glimpse()
+district_coast %>% glimpse()
 
 ggplot() +
-  geom_sf(data = wider_water, fill = "steelblue", colour = NA, alpha = 0.8) +
-  # geom_sf(data = all_green, fill = "darkgreen", colour = NA, alpha = 0.2) +
-  geom_sf(data = all_urban, fill = "grey50", colour = NA, alpha = 0.2) +
-  geom_sf(data = all_coast, colour = "blue", alpha = 1) +
+  geom_sf(data = district_water, fill = "steelblue", colour = NA, alpha = 0.8) +
+  geom_sf(data = district_coast, colour = "blue", alpha = 1) +
   geom_sf(data = mb_geom %>% filter(pop_density > 0.5e-03),
           aes(fill = pop_density),
           colour = NA, alpha = 1) +
-  # scale_fill_distiller(palette = "YlOrRd", direction = -1) +
   scale_fill_viridis_c(option = "B") +
   geom_road("small", colour = "grey30", size = .2) +
   geom_road("medium", colour = "grey40", size = .5) +
@@ -298,3 +303,4 @@ ggplot() +
   theme(
     panel.background = element_rect(fill = "grey20", colour = "grey20")
   )
+# coast is for whole NI!
