@@ -269,7 +269,8 @@ ggplot(mock_stats_sf) +
 
 district_bbox <- getbb('whangarei district nz')
 district_bbox_st <- c(xmin = district_bbox["x", "min"], xmax = district_bbox["x", "max"],
-                      ymin = district_bbox["y", "min"], ymax = district_bbox["y", "max"])
+                      ymin = district_bbox["y", "min"], ymax = district_bbox["y", "max"]) %>% 
+  st_bbox(crs = 4326)
 district_osm <- opq(bbox = district_bbox) %>%
   osmdata_sf()
 # takes ~2 mins on laptop. resulting object ~3.4GB, but we want to get water objects etc as well as streets
@@ -283,11 +284,20 @@ district_boundary <- district_multipolygons %>%
   filter(name == "Whangarei District") %>% 
   select(name, admin_level, population)
 
+district_bbox_area <- district_bbox_st %>%
+  st_as_sfc() %>%
+  st_area() %>%
+  units::set_units(km2) %>%
+  as.numeric()
+min_area <- (sqrt(district_bbox_area) / 100) ^ 2
+
 district_water <- district_polygons %>% select(name, natural, water, waterway) %>% 
   bind_rows(district_multipolygons %>% select(name, natural, water, waterway)) %>% 
   filter(natural %in% c("water", "coastline", "bay") |
            water %in% c("lake", "reservoir", "river") |
            waterway %in% c("dam", "river", "riverbank")) %>% 
+  # st_transform(2193) %>% 
+  mutate(area = st_area(.) %>% units::set_units(km2) %>% as.numeric()) %>% 
   st_crop(district_bbox_st)
 
 district_coast <- district_lines %>% 
@@ -295,10 +305,10 @@ district_coast <- district_lines %>%
 district_coast %>% janitor::remove_empty("cols") %>% glimpse()
 
 ggplot() +
-  geom_sf(data = district_water, fill = "steelblue", colour = NA, alpha = 0.8) +
+  geom_sf(data = district_water %>% filter(area > min_area), fill = "steelblue", colour = NA, alpha = 0.8) +
   geom_sf(data = district_boundary, colour = "red", fill = NA) +
   # geom_sf(data = district_coast, colour = "blue", alpha = 1) +
-  geom_sf(data = mb_geom %>% filter(pop_density > 0.1e-03),
+  geom_sf(data = mock_stats_sf %>% filter(threshold == 60),
           aes(fill = pop_density),
           colour = NA, alpha = 1) +
   scale_fill_viridis_c(option = "B") +
