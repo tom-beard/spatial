@@ -230,15 +230,17 @@ ggplot() +
   theme(
     panel.background = element_rect(fill = "grey20", colour = "grey20")
   )
-# coast is for whole NI! Also extends all SHs, and possibly any relations that continue beyond the boundary
+# coast is for whole NI!
+# Also extends all SHs, and possibly any relations that continue beyond the boundary,
+# but we clipped these earlier
+
+# TODO: create land polygons from coastline
 
 # small multiples ---------------------------------------------------------
 
 ggplot(mock_stats_sf) +
   geom_sf(data = district_water, fill = "steelblue", colour = NA, alpha = 0.8) +
-  # geom_sf(data = all_urban, fill = "grey50", colour = NA, alpha = 0.2) +
-  geom_sf(aes(fill = value),
-          colour = NA, alpha = 1) +
+  geom_sf(aes(fill = value), colour = NA, alpha = 1) +
   scale_fill_viridis_c(option = "B") +
   geom_road("small", colour = "grey30", size = .2) +
   geom_road("medium", colour = "grey40", size = .5) +
