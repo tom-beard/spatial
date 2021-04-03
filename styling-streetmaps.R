@@ -172,11 +172,10 @@ mb_df <- read_csv(path_to_mb_data) %>% select(1:6)
 
 mb_geom <- st_read(path_to_shapefile,
                     quiet = TRUE) %>% 
-  filter(UA2014_NAM == "Whangarei") %>% 
+  filter(TA2014_NAM == "Whangarei District") %>% 
   left_join(mb_df, by = c("MB2014" = "Code")) %>% 
   mutate(pop_density = `2013_Census_census_usually_resident_population_count(1)` / SHAPE_Area) %>% 
-  st_transform(crs = 4326) %>% 
-  st_crop(urban_bbox)
+  st_transform(crs = 4326)
 
 # basemap with choropleth -------------------------------------------------
 
@@ -184,7 +183,7 @@ ggplot() +
   geom_sf(data = all_water, fill = "steelblue", colour = NA, alpha = 0.5) +
   # geom_sf(data = all_green, fill = "darkgreen", colour = NA, alpha = 0.2) +
   geom_sf(data = all_urban, fill = "grey50", colour = NA, alpha = 0.2) +
-  geom_sf(data = mb_geom %>% filter(pop_density > 0.5e-03),
+  geom_sf(data = mb_geom %>% filter(pop_density > 1e-04),
           aes(fill = pop_density),
           colour = NA, alpha = 1) +
   scale_fill_distiller(palette = "YlOrRd", direction = 1) +
@@ -207,7 +206,7 @@ ggplot() +
   geom_sf(data = all_water, fill = "steelblue", colour = NA, alpha = 0.8) +
   # geom_sf(data = all_green, fill = "darkgreen", colour = NA, alpha = 0.2) +
   geom_sf(data = all_urban, fill = "grey50", colour = NA, alpha = 0.2) +
-  geom_sf(data = mb_geom %>% filter(pop_density > 0.5e-03),
+  geom_sf(data = mb_geom %>% filter(pop_density > 1e-04),
           aes(fill = pop_density),
           colour = NA, alpha = 1) +
   # scale_fill_distiller(palette = "YlOrRd", direction = -1) +
@@ -225,7 +224,6 @@ ggplot() +
 # notes:
 # viridis palettes work better against dark backgrounds, but lowest values are still too dark
 
-
 # small multiples ---------------------------------------------------------
 
 # mock up data
@@ -233,7 +231,7 @@ mb_range <- mb_geom$MB2014 %>% as.numeric() %>% range()
 density_range <- mb_geom$pop_density %>% as.numeric() %>% range()
 
 mock_stats <- mb_geom %>% 
-  filter(pop_density > 0.5e-03) %>% 
+  filter(pop_density > 1e-04) %>% 
   as_tibble() %>% 
   select(MB2014, v_1 = pop_density) %>% 
   mutate(MB = as.numeric(MB2014)) %>% 
@@ -300,7 +298,7 @@ ggplot() +
   geom_sf(data = district_water, fill = "steelblue", colour = NA, alpha = 0.8) +
   geom_sf(data = district_boundary, colour = "red", fill = NA) +
   # geom_sf(data = district_coast, colour = "blue", alpha = 1) +
-  geom_sf(data = mb_geom %>% filter(pop_density > 0.5e-03),
+  geom_sf(data = mb_geom %>% filter(pop_density > 0.1e-03),
           aes(fill = pop_density),
           colour = NA, alpha = 1) +
   scale_fill_viridis_c(option = "B") +
