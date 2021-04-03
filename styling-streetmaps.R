@@ -285,7 +285,7 @@ district_water <- district_polygons %>% select(name, natural, water, waterway) %
 
 district_coast <- district_lines %>% 
   filter(natural == "coastline")
-district_coast %>% glimpse()
+district_coast %>% janitor::remove_empty("cols") %>% glimpse()
 
 ggplot() +
   geom_sf(data = district_water, fill = "steelblue", colour = NA, alpha = 0.8) +
@@ -294,13 +294,13 @@ ggplot() +
           aes(fill = pop_density),
           colour = NA, alpha = 1) +
   scale_fill_viridis_c(option = "B") +
-  geom_road("small", colour = "grey30", size = .2) +
-  geom_road("medium", colour = "grey40", size = .5) +
-  geom_road("large", colour = "grey50", size = 1) +
+  geom_sf(data = filter_highways(district_lines, "small"), colour = "grey30", size = 0.2) +
+  geom_sf(data = filter_highways(district_lines, "medium"), colour = "grey40", size = 0.5) +
+  geom_sf(data = filter_highways(district_lines, "large"), colour = "grey50", size = 1) +
   labs(x = "", y = "", title = "") +
   coord_sf(expand = FALSE) +
   theme_void() +
   theme(
     panel.background = element_rect(fill = "grey20", colour = "grey20")
   )
-# coast is for whole NI!
+# coast is for whole NI! Also extends all SHs, and possibly any relations that continue beyond the boundary
