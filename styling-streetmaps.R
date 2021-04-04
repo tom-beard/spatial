@@ -78,6 +78,7 @@ all_urban <- district_polygons %>% select(name, landuse) %>%
 district_polygons %>% as_tibble() %>% count(highway, junction)
 # note: several highways appear as polygons
 # a few walkways etc, but mostly roundabouts
+# might just be able to use st_cast() to convert to linestring?
 
 # prepare highway layers ----------------------------------------------------------
 
@@ -211,6 +212,17 @@ ggplot() +
 # viridis palettes work better against dark backgrounds, but lowest values are still too dark
 
 # maps and coastline  -----------------------------------------------
+
+coast_poly <- osm_line2poly(district_coast, district_bbox_st)
+# this fails, due to an open issue: https://github.com/ropensci/osmplotr/issues/29
+# (awaiting PR: https://github.com/ropensci/osmplotr/pull/38/files)
+
+coast_poly <- district_coast$geometry %>% 
+  st_combine() %>% 
+  st_polygonize()
+
+ggplot() +
+  geom_sf(data = coast_poly, colour = "blue", fill = "steelblue", alpha = 1)
 
 ggplot() +
   geom_sf(data = district_water %>% filter(area > min_area), fill = "steelblue", colour = NA, alpha = 0.8) +
