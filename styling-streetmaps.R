@@ -217,12 +217,49 @@ coast_poly <- osm_line2poly(district_coast, district_bbox_st)
 # this fails, due to an open issue: https://github.com/ropensci/osmplotr/issues/29
 # (awaiting PR: https://github.com/ropensci/osmplotr/pull/38/files)
 
-coast_poly <- district_coast$geometry %>% 
+coast_poly_direct <- district_coast$geometry %>% 
   st_combine() %>% 
   st_polygonize()
 
 ggplot() +
-  geom_sf(data = coast_poly, colour = "blue", fill = "steelblue", alpha = 1)
+  geom_sf(data = coast_poly_direct, colour = "blue", fill = "steelblue", alpha = 1)
+
+# try some code from https://github.com/ropensci/osmplotr/pull/38/files
+m1 <- st_cast(st_line_merge(st_union(district_coast$geometry)), "LINESTRING")
+m2 <- st_polygonize(m1)
+k <- st_dimension(m2)
+st_is_empty(m2)
+islands <- st_cast(m2)
+
+ggplot() +
+  geom_sf(data = m2, colour = "blue", fill = "steelblue", alpha = 1)
+# same as coast_poly_direct
+
+m1lines <- m1[is.na(k)]
+
+m1lines %>% st_combine() %>% st_polygonize() # empty: can't polygonize
+polys <- st_cast(st_polygonize(m1lines[2]))
+
+lines2_start_end <- m1lines[2] %>% 
+  st_transform(2193) %>% 
+  st_line_sample(sample = c(0, 1)) %>% 
+  st_transform(4326)
+
+lines1_bbox <- st_bbox_with_buffer(m1lines[1], buffer_m = 50000)
+lines2_bbox <- st_bbox_with_buffer(lines2_start_end, buffer_m = 1000)
+
+ggplot() +
+  geom_sf(data = m1lines[2], colour = "blue", alpha = 1) +
+  geom_sf(data = m1lines[1], colour = "red", alpha = 1, size = 1) +
+  coord_sf(xlim = c(lines1_bbox$xmin, lines1_bbox$xmax), ylim = c(lines1_bbox$ymin, lines1_bbox$ymax))
+# stupid little snippet, possible near the top of the WDC bbox. Part of an island?
+
+ggplot() +
+  geom_sf(data = m1lines[2], colour = "blue", alpha = 1) +
+  geom_sf(data = m1lines[1], colour = "red", alpha = 1, size = 10) +
+  geom_sf(data = lines2_start_end, colour = "purple", alpha = 1, size = 2) +
+  coord_sf(xlim = c(lines2_bbox$xmin, lines2_bbox$xmax), ylim = c(lines2_bbox$ymin, lines2_bbox$ymax))
+# tiny gap in upper Waitemata! Kingsway Rd causeway
 
 ggplot() +
   geom_sf(data = district_water %>% filter(area > min_area), fill = "steelblue", colour = NA, alpha = 0.8) +
