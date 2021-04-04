@@ -287,6 +287,41 @@ if (FALSE) {
   # but we clipped these earlier
 }
 
+
+# LINZ coastlines ---------------------------------------------------------
+
+land2 <- st_read("D:/GIS/Terralink_Oct_07/Hydro/Polygons/land2.shp")
+land2 %>% 
+  st_transform(4326) %>% 
+  ggplot() +
+  geom_sf()
+
+district_land <- land2 %>% 
+  st_transform(4326) %>% # would be better to transform bbox to 2193 first and crop with that
+  st_crop(district_bbox_st)
+
+ggplot() +
+  geom_sf(data = district_land, fill = "grey30", colour = NA) +
+  geom_sf(data = district_boundary, fill = "grey20") +
+  geom_sf(data = district_water %>% filter(area > min_area),
+          fill = "steelblue", colour = NA) +
+  geom_sf(data = mock_stats_sf %>% filter(threshold == 60),
+          aes(fill = pop_density),
+          colour = NA, alpha = 1) +
+  scale_fill_viridis_c(option = "B") +
+  # geom_sf(data = filter_highways(district_highways, "small"), colour = "grey30", size = 0.2) +
+  geom_sf(data = filter_highways(district_highways, "medium"), colour = "grey40", size = 0.5) +
+  geom_sf(data = filter_highways(district_highways, "large"), colour = "grey50", size = 1) +
+  labs(x = "", y = "", title = "") +
+  coord_sf(expand = FALSE) +
+  # coord_sf(xlim = c(district_bbox["x", ]), ylim = c(district_bbox["y", ]), expand = FALSE) +
+  theme_void() +
+  theme(
+    panel.background = element_rect(fill = "steelblue")
+  )
+# this colour scheme for district vs non-district looks nice, partly because
+# the fill matches the small highway colour
+
 # small multiples ---------------------------------------------------------
 
 ggplot(mock_stats_sf) +
