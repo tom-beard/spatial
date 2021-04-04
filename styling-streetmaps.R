@@ -293,14 +293,12 @@ if (FALSE) {
 # LINZ coastlines ---------------------------------------------------------
 
 land2 <- st_read("D:/GIS/Terralink_Oct_07/Hydro/Polygons/land2.shp")
-land2 %>% 
-  st_transform(4326) %>% 
-  ggplot() +
-  geom_sf()
 
 district_land <- land2 %>% 
-  st_transform(4326) %>% # would be better to transform bbox to 2193 first and crop with that
-  st_crop(district_bbox_st)
+  select(geometry) %>% 
+  st_crop(st_bbox(st_transform(st_as_sfc(district_bbox_st), 2193))) %>% 
+  st_union() %>% 
+  st_transform(4326)
 
 ggplot() +
   geom_sf(data = district_land, fill = "grey30", colour = NA) +
