@@ -13,12 +13,14 @@ library(glue)
 library(fs)
 library(osmdata) # for local use, read from local files instead
 library(janitor)
-library(osmplotr)
+# library(osmplotr)
 
+this_area <- "Whangarei District"
 
 # get and process OSM data ------------------------------------------------------------
 
-district_bbox <- getbb('whangarei district nz')
+district_bbox <- getbb(paste(this_area, "NZ")) # untested
+# district_bbox <- getbb('whangarei district nz')
 district_bbox_st <- c(xmin = district_bbox["x", "min"], xmax = district_bbox["x", "max"],
                       ymin = district_bbox["y", "min"], ymax = district_bbox["y", "max"]) %>% 
   st_bbox(crs = 4326)
@@ -32,7 +34,7 @@ district_highways <- district_lines %>% filter(!is.na(highway)) %>%
 district_polygons <- district_osm$osm_polygons
 district_multipolygons <- unname_osmdata_sf(district_osm)$osm_multipolygons # fixed named geometry object issue
 district_boundary <- district_multipolygons %>%
-  filter(name == "Whangarei District") %>% 
+  filter(name == this_area) %>% 
   select(name, admin_level, population)
 
 district_bbox_area <- district_bbox_st %>%
@@ -157,7 +159,7 @@ mb_df <- read_csv(path_to_mb_data) %>% select(1:6)
 
 mb_geom <- st_read(path_to_shapefile,
                     quiet = TRUE) %>% 
-  filter(TA2014_NAM == "Whangarei District") %>% 
+  filter(TA2014_NAM == this_area) %>% # when this_area is a TA name
   left_join(mb_df, by = c("MB2014" = "Code")) %>% 
   mutate(pop_density = `2013_Census_census_usually_resident_population_count(1)` / SHAPE_Area) %>% 
   st_transform(crs = 4326)
@@ -309,7 +311,7 @@ ggplot() +
           aes(fill = pop_density),
           colour = NA, alpha = 1) +
   scale_fill_viridis_c(option = "B") +
-  # geom_sf(data = filter_highways(district_highways, "small"), colour = "grey30", size = 0.2) +
+  geom_sf(data = filter_highways(district_highways, "small"), colour = "grey30", size = 0.2) +
   geom_sf(data = filter_highways(district_highways, "medium"), colour = "grey40", size = 0.5) +
   geom_sf(data = filter_highways(district_highways, "large"), colour = "grey50", size = 1) +
   labs(x = "", y = "", title = "") +
@@ -325,18 +327,23 @@ ggplot() +
 # small multiples ---------------------------------------------------------
 
 ggplot(mock_stats_sf) +
-  geom_sf(data = district_water, fill = "steelblue", colour = NA, alpha = 0.8) +
+  geom_sf(data = district_land, fill = "grey30", colour = NA) +
+  geom_sf(data = district_boundary, fill = "grey20") +
+  geom_sf(data = district_water %>% filter(area > min_area),
+          fill = "steelblue", colour = NA) +
   geom_sf(aes(fill = value), colour = NA, alpha = 1) +
   scale_fill_viridis_c(option = "B") +
   geom_road("small", colour = "grey30", size = .2) +
   geom_road("medium", colour = "grey40", size = .5) +
   geom_road("large", colour = "grey50", size = 1) +
   facet_wrap(~ threshold) +
-  labs(x = "", y = "", title = "") +
+  labs(x = "", y = "",
+       title = glue("Simulated data for various thresholds for {this_area}"),
+       caption = "Base map and data from OpenStreetMap and OpenStreetMap Foundation") +
   coord_sf(expand = FALSE) +
   theme_void() +
   theme(
-    panel.background = element_rect(fill = "grey20", colour = "grey20"),
+    panel.background = element_rect(fill = "steelblue"),
     panel.spacing = unit(0.5, "lines"),
     strip.text = element_text(margin = margin(b = 0.5, unit = "lines"))
   )
