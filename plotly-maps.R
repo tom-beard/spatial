@@ -79,3 +79,32 @@ fig %>%
       center = list(lon = -95.71, lat = 37.09))
   )
 
+
+# add interactivity? -------------------------------------------------------
+
+fig_map <- fig %>%
+  layout(
+    mapbox = list(
+      style = "carto-positron",
+      zoom = 2,
+      center = list(lon = -95.71, lat = 37.09))
+  )
+
+# these aren't going to work as-is: need to delve deeper into
+# https://plotly-r.com/client-side-linking.html#graphical-queries
+
+hist <- add_histogram(
+  fig,
+  x = ~median, 
+  histnorm = "probability density"
+)
+hist
+
+
+subplot(time_series, hist, nrows = 2) %>%
+  layout(barmode = "overlay", showlegend = FALSE) %>%
+  highlight(
+    dynamic = TRUE, 
+    selectize = TRUE, 
+    selected = attrs_selected(opacity = 0.3)
+  )
