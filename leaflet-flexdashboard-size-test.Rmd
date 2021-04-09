@@ -1,0 +1,77 @@
+---
+title: "Untitled"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(sf)
+library(glue)
+library(fs)
+library(janitor)
+library(leaflet)
+
+this_area <- "Whangarei District"
+
+path_to_shapefile <- "D:/GIS/census/Census 2013/ESRI_Shapefile_Digital_Boundaries_2014_High_Def_Clipped/MB2014_HD_Clipped.shp"
+path_to_mb_data <- "D:/GIS/census/Census 2013/2013_mb_dataset_Total_New_Zealand_CSV/mb2013_indiv1.csv"
+
+mb_df <- read_csv(path_to_mb_data) %>% select(1:6)
+
+mb_geom <- st_read(path_to_shapefile,
+                    quiet = TRUE) %>% 
+  filter(TA2014_NAM == this_area) %>% # when this_area is a TA name
+  left_join(mb_df, by = c("MB2014" = "Code")) %>% 
+  mutate(pop_density = `2013_Census_census_usually_resident_population_count(1)` / SHAPE_Area) %>% 
+  st_transform(crs = 4326)
+
+# mock up data for small multiples
+mb_range <- mb_geom$MB2014 %>% as.numeric() %>% range()
+density_range <- mb_geom$pop_density %>% as.numeric() %>% range()
+
+mock_stats <- mb_geom %>% 
+  filter(pop_density > 1e-04) %>% 
+  as_tibble() %>% 
+  select(MB2014, v_1 = pop_density) %>% 
+  mutate(MB = as.numeric(MB2014)) %>% 
+  mutate(v_2 = (density_range[2] - v_1) *.6,
+         v_3 = v_1 * (MB - mb_range[1]) / diff(mb_range),
+         v_4 = v_2 * (MB - mb_range[1]) / diff(mb_range)
+  ) %>% 
+  pivot_longer(starts_with("v_"), names_to = "threshold", names_prefix = "v_") %>% 
+  select(-MB) %>% 
+  mutate(threshold = as.numeric(threshold) * 15)
+
+mock_stats_sf <- mb_geom %>% 
+  inner_join(mock_stats, by = "MB2014")
+
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Chart A
+
+```{r}
+mock_stats_sf %>% head(10)
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r}
+
+```
+
+### Chart C
+
+```{r}
+
+```
+
