@@ -47,8 +47,10 @@ mock_stats <- mb_geom %>%
   mutate(threshold = as.numeric(threshold) * 15)
 
 mock_stats_sf <- mb_geom %>% 
-  inner_join(mock_stats, by = "MB2014")
+  inner_join(mock_stats, by = "MB2014") %>% 
+  select(MB2014, threshold, value, geometry)
 
+value_pal <- colorNumeric("viridis", domain = density_range)
 ```
 
 Column {data-width=650}
@@ -57,7 +59,24 @@ Column {data-width=650}
 ### Chart A
 
 ```{r}
-mock_stats_sf %>% head(10)
+leaflet() %>%
+  addProviderTiles(providers$Stamen.Terrain, group = "Terrain") %>%
+  addProviderTiles(providers$Esri.WorldTopoMap, group = "TopoMap") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Aerial") %>%
+  addTiles(group = "OSM") %>%
+  addProviderTiles(providers$Stamen.TonerLite, group = "Toner Lite") %>%
+  addPolygons(data = mock_stats_sf %>% filter(threshold == 15),
+              group = "15",
+                   label = ~glue("{MB2014}"),
+                   stroke = TRUE, color = "white", opacity = 1, weight = 1,
+                   fill = TRUE, fillColor = ~value_pal(value), fillOpacity = 0.8,
+                   popup = ~glue("{MB2014}")) %>%
+  addLayersControl(baseGroups = c("Terrain", "TopoMap", "Aerial", "OSM", "Toner Lite"),
+                   overlayGroups = c("15"),
+                   options = layersControlOptions(collapsed = FALSE)) %>%
+  addMeasure(primaryLengthUnit = "meters", primaryAreaUnit = "sqmeters")
+
+  
 ```
 
 Column {data-width=350}
@@ -66,12 +85,18 @@ Column {data-width=350}
 ### Chart B
 
 ```{r}
-
+mock_stats_sf %>% as.data.frame() %>% count(threshold)
 ```
+
+4 layers, 500 meshblocks per layer
+
+Text output only: 880kB
+One leaflet layer: 4.1MB
 
 ### Chart C
 
 ```{r}
+mock_stats_sf %>% head(10)
 
 ```
 
