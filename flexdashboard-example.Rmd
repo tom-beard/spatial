@@ -1,7 +1,8 @@
 ---
 title: "Quake map: flexdashboard + crosstalk + leaflet"
 output: 
-  flexdashboard::flex_dashboard
+  flexdashboard::flex_dashboard:
+    theme: paper
 ---
 
 ```{r setup, include=FALSE}

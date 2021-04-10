@@ -2,6 +2,7 @@
 title: "Accessibility analysis"
 output: 
   flexdashboard::flex_dashboard:
+    theme: yeti
     orientation: columns
     vertical_layout: fill
 ---
@@ -127,21 +128,28 @@ dashboard_file_size %>%
 ### Data summary
 
 ```{r}
-mock_stats_sf %>% head(10)
+mock_stats %>%
+  count(threshold) %>%
+  knitr::kable(align = "l",
+               caption = "count of valid meshblock per threshold")
 
 ```
 
 # Detailed data
 
-### Accessibility data table {data-height=800}
+### Accessibility data table {data-height=850}
     
 ```{r}
 mock_stats %>% 
   datatable(filter = 'top',
-            options = list(pageLength = 15, autoWidth = TRUE))
+            extensions = 'Buttons',
+            options = list(pageLength = 15, autoWidth = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'pdf', 'print'))
+  )
 ```
     
-### About this data {data-height=200}
+### About this data {data-height=150}
 
-This example is for ```{r this_area}```. All data is mocked up for demo purposes.
+This example is for `r this_area`. All data is mocked up for demo purposes.
 
