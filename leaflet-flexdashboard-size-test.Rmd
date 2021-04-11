@@ -71,28 +71,32 @@ leaflet() %>%
   addProviderTiles(providers$Stamen.TonerLite, group = "Toner Lite") %>%
   addPolygons(data = mock_stats_sf %>% filter(threshold == 15),
               group = "15",
-                   label = ~glue("{MB2014}"),
+                   label = ~glue("MB: {MB2014}"),
                    stroke = TRUE, color = "white", opacity = 1, weight = 1,
                    fill = TRUE, fillColor = ~value_pal(value), fillOpacity = 0.8,
-                   popup = ~glue("{MB2014}")) %>%
+                   highlight = highlightOptions(weight = 3, bringToFront = TRUE),
+                   popup = ~glue("MB: {MB2014}: value = {value}")) %>%
   addPolygons(data = mock_stats_sf %>% filter(threshold == 30),
               group = "30",
-                   label = ~glue("{MB2014}"),
+                   label = ~glue("MB: {MB2014}: value = {value}"),
                    stroke = TRUE, color = "white", opacity = 1, weight = 1,
                    fill = TRUE, fillColor = ~value_pal(value), fillOpacity = 0.8,
-                   popup = ~glue("{MB2014}")) %>%
+                   highlight = highlightOptions(weight = 3, bringToFront = TRUE),
+                   popup = ~glue("MB: {MB2014}: value = {value}")) %>%
   addPolygons(data = mock_stats_sf %>% filter(threshold == 45),
               group = "45",
-                   label = ~glue("{MB2014}"),
+                   label = ~glue("MB: {MB2014}"),
                    stroke = TRUE, color = "white", opacity = 1, weight = 1,
                    fill = TRUE, fillColor = ~value_pal(value), fillOpacity = 0.8,
-                   popup = ~glue("{MB2014}")) %>%
+                   highlight = highlightOptions(weight = 3, bringToFront = TRUE),
+                   popup = ~glue("MB: {MB2014}: value = {value}")) %>%
   addPolygons(data = mock_stats_sf %>% filter(threshold == 60),
               group = "60",
-                   label = ~glue("{MB2014}"),
+                   label = ~glue("MB: {MB2014}"),
                    stroke = TRUE, color = "white", opacity = 1, weight = 1,
                    fill = TRUE, fillColor = ~value_pal(value), fillOpacity = 0.8,
-                   popup = ~glue("{MB2014}")) %>%
+                   highlight = highlightOptions(weight = 3, bringToFront = TRUE),
+                   popup = ~glue("MB: {MB2014}: value = {value}")) %>%
   hideGroup(c("15", "30", "45")) %>% 
   addLayersControl(baseGroups = c("Terrain", "TopoMap", "Aerial", "OSM", "Toner Lite"),
                    overlayGroups = c("15", "30", "45", "60"),
