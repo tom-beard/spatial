@@ -93,6 +93,7 @@ leaflet() %>%
                    stroke = TRUE, color = "white", opacity = 1, weight = 1,
                    fill = TRUE, fillColor = ~value_pal(value), fillOpacity = 0.8,
                    popup = ~glue("{MB2014}")) %>%
+  hideGroup(c("15", "30", "45")) %>% 
   addLayersControl(baseGroups = c("Terrain", "TopoMap", "Aerial", "OSM", "Toner Lite"),
                    overlayGroups = c("15", "30", "45", "60"),
                    options = layersControlOptions(collapsed = FALSE)) %>%
