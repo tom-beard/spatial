@@ -8,5 +8,5 @@ Further ideas and packages to pursue:
 * Plotly for interactive leaflet-like maps (https://plotly.com/r/mapbox-layers/). Can it do brushing etc within Plotly? Including polygons?
 * ~~Processing OSM layers to break up polygon roads into polylines, get sea/ocean geometry etc. Try https://cran.r-project.org/web/packages/osmplotr/? (Tried this: osmplotr::osmlines2poly() doesn't work)~~
 * WebGL-based vis of large spatial data with deck.gl (https://github.com/crazycapivara/deckgl)
-* Crop network to SA1 and find graph-theoretic or OTP routed "centre" of that.
+* Crop network to SA1 and find graph-theoretic or OTP routed "centre" of that (betweenness or eigenvector centrality).
 * ~~Test size of flexdashboard HTML files depending upon number of SA1 layers in leaflet.~~
