@@ -57,21 +57,61 @@ This is *just* a `gtfs` object, without the `tidygtfs` class. But it still valid
 validate_gtfs(new_gtfs)
 ```
 
-It seems `tidytransit` doesn't do too much more than gtfsio: just converts to tibble, convert dates and times, adds validation results and an empty `.` slot. However, those conversions rely on the table objects inheriting from `data.table`.
-
 ```{r}
 read_gtfs
 ```
 
+It seems `tidytransit` doesn't do too much more than gtfsio: just converts to tibble, convert dates and times, adds validation results and an empty `.` slot. However, those conversions rely on the table objects inheriting from `data.table`.
+
+Let's try this on our `gtfs` object.
+
+```{r}
+g  <- gtfs
+validation_result <- validate_gtfs(g)
+g$. <- list()
+# g <- tidytransit:::convert_times_to_hms(g)
+# g <- tidytransit:::convert_dates(g)
+# g <- tidytransit:::set_dates_services(g)
+# g[names(g) != "."] <- lapply(g[names(g) != "."], 
+#     dplyr::as_tibble)
+# g <- gtfsio::new_gtfs(g)
+# class(g) <- c("tidygtfs", "gtfs")
+# attributes(g)$validation_result <- validation_result
+# g
+```
+
+This fails at `tidytransit:::convert_times_to_hms(g) : inherits(gtfs_obj$stop_times, "data.table") is not TRUE`. Let's try converting to `data.table` first.
+
+```{r}
+g  <- gtfs
+validation_result <- validate_gtfs(g)
+g$. <- list()
+g[names(g) != "."] <- lapply(g[names(g) != "."],
+    data.table::as.data.table)
+g <- tidytransit:::convert_times_to_hms(g)
+g <- tidytransit:::convert_dates(g)
+g <- tidytransit:::set_dates_services(g)
+g[names(g) != "."] <- lapply(g[names(g) != "."],
+    dplyr::as_tibble)
+g <- gtfsio::new_gtfs(g)
+class(g) <- c("tidygtfs", "gtfs")
+attributes(g)$validation_result <- validation_result
+class(g)
+```
+
+This seems to work! 
+
 ## Exporting as valid GTFS files
 
-It might be quite a bit of work to create valid `tidygtfs` objects. It could be worth it if we want to use any of the `tidytransit` functions for analysis, but for just exporting to GTFS files for OTP use, it might be easier just to adapt a simplified version of the code from `gtfsio::export_gtfs`:
+It could be worth doing this to create valid `tidygtfs` objects if we want to use any of the `tidytransit` functions for analysis, but it might be too much for just exporting to GTFS files for OTP use.
+
+In that case it might be easier just to adapt a simplified version of the code from `gtfsio::export_gtfs`:
 
 ```{r}
 gtfsio::export_gtfs
 ```
 
-Might it be easier to use `readr::write_csv()` rather than `data.table::fwrite()`?
+If neccesary, we could use `readr::write_csv()` rather than `data.table::fwrite()`.
 
 ### Important notes:
 

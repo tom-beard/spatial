@@ -112,8 +112,6 @@ validate_gtfs(new_gtfs)
     ## # ... with 126 more rows, and 2 more variables: validation_status <chr>,
     ## #   validation_details <chr>
 
-It seems `tidytransit` doesn't do too much more than gtfsio: just converts to tibble, convert dates and times, adds validation results and an empty `.` slot. However, those conversions rely on the table objects inheriting from `data.table`.
-
 ``` r
 read_gtfs
 ```
@@ -132,12 +130,61 @@ read_gtfs
     ##     attributes(g)$validation_result <- validation_result
     ##     g
     ## }
-    ## <bytecode: 0x000000001994a480>
+    ## <bytecode: 0x00000000199393a8>
     ## <environment: namespace:tidytransit>
+
+It seems `tidytransit` doesn't do too much more than gtfsio: just converts to tibble, convert dates and times, adds validation results and an empty `.` slot. However, those conversions rely on the table objects inheriting from `data.table`.
+
+Let's try this on our `gtfs` object.
+
+``` r
+g  <- gtfs
+validation_result <- validate_gtfs(g)
+g$. <- list()
+# g <- tidytransit:::convert_times_to_hms(g)
+# g <- tidytransit:::convert_dates(g)
+# g <- tidytransit:::set_dates_services(g)
+# g[names(g) != "."] <- lapply(g[names(g) != "."], 
+#     dplyr::as_tibble)
+# g <- gtfsio::new_gtfs(g)
+# class(g) <- c("tidygtfs", "gtfs")
+# attributes(g)$validation_result <- validation_result
+# g
+```
+
+This fails at `tidytransit:::convert_times_to_hms(g) : inherits(gtfs_obj$stop_times, "data.table") is not TRUE`. Let's try converting to `data.table` first.
+
+``` r
+g  <- gtfs
+validation_result <- validate_gtfs(g)
+g$. <- list()
+g[names(g) != "."] <- lapply(g[names(g) != "."],
+    data.table::as.data.table)
+g <- tidytransit:::convert_times_to_hms(g)
+g <- tidytransit:::convert_dates(g)
+g <- tidytransit:::set_dates_services(g)
+```
+
+    ## Warning in tidytransit:::set_dates_services(g): No valid dates defined in feed
+
+``` r
+g[names(g) != "."] <- lapply(g[names(g) != "."],
+    dplyr::as_tibble)
+g <- gtfsio::new_gtfs(g)
+class(g) <- c("tidygtfs", "gtfs")
+attributes(g)$validation_result <- validation_result
+class(g)
+```
+
+    ## [1] "tidygtfs" "gtfs"
+
+This seems to work!
 
 ## Exporting as valid GTFS files
 
-It might be quite a bit of work to create valid `tidygtfs` objects. It could be worth it if we want to use any of the `tidytransit` functions for analysis, but for just exporting to GTFS files for OTP use, it might be easier just to adapt a simplified version of the code from `gtfsio::export_gtfs`:
+It could be worth doing this to create valid `tidygtfs` objects if we want to use any of the `tidytransit` functions for analysis, but it might be too much for just exporting to GTFS files for OTP use.
+
+In that case it might be easier just to adapt a simplified version of the code from `gtfsio::export_gtfs`:
 
 ``` r
 gtfsio::export_gtfs
@@ -223,10 +270,10 @@ gtfsio::export_gtfs
     ##     }
     ##     return(invisible(gtfs))
     ## }
-    ## <bytecode: 0x000000002427c7d8>
+    ## <bytecode: 0x00000000241be1a0>
     ## <environment: namespace:gtfsio>
 
-Might it be easier to use `readr::write_csv()` rather than `data.table::fwrite()`?
+If neccesary, we could use `readr::write_csv()` rather than `data.table::fwrite()`.
 
 ### Important notes:
 
