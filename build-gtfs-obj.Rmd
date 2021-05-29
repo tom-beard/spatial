@@ -1,5 +1,5 @@
 ---
-title: "Building GTFS objects"
+title: "Building gtfs and tidygtfs objects"
 output: github_document
 ---
 
@@ -32,7 +32,7 @@ gtfs$routes %>% class()
 class(gtfs)
 ```
 
-These are standard tibbles, not data.table as used by gtfsio for reading. The gtfs object actually has class `tidygtfs` as well as inheriting from `gtfs`.
+These are standard tibbles, not data.table as used by gtfsio for reading. The gtfs object has class `tidygtfs` as well as inheriting from `gtfs`.
 
 ## Try creating a new tidygtfs object
 
@@ -57,7 +57,7 @@ This is *just* a `gtfs` object, without the `tidygtfs` class. But it still valid
 validate_gtfs(new_gtfs)
 ```
 
-Luckily, `tidytransit` doesn't do too much more than gtfsio: just converts to tibble, convert dates and times, add validation results and empty `.` slot.
+It seems `tidytransit` doesn't do too much more than gtfsio: just converts to tibble, convert dates and times, adds validation results and an empty `.` slot. However, those conversions rely on the table objects inheriting from `data.table`.
 
 ```{r}
 read_gtfs
@@ -65,7 +65,15 @@ read_gtfs
 
 ## Exporting as valid GTFS files
 
-Important notes:
+It might be quite a bit of work to create valid `tidygtfs` objects. It could be worth it if we want to use any of the `tidytransit` functions for analysis, but for just exporting to GTFS files for OTP use, it might be easier just to adapt a simplified version of the code from `gtfsio::export_gtfs`:
 
-* Dates are written as `yyyymmdd` text: beware of databases converting these to Date object-style integers.
-* Times are written as `hh:mm:ss` text: beware of conversions to hms objects.
+```{r}
+gtfsio::export_gtfs
+```
+
+Might it be easier to use `readr::write_csv()` rather than `data.table::fwrite()`?
+
+### Important notes:
+
+* Dates in GTFS files need to be written as `yyyymmdd` text: beware of databases converting these to Date object-style integers.
+* GTFS times are written as `hh:mm:ss` text: beware of conversions to `hms` objects.

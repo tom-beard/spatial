@@ -1,4 +1,4 @@
-Building GTFS objects
+Building gtfs and tidygtfs objects
 ================
 
 ## Load test GTFS
@@ -70,7 +70,7 @@ class(gtfs)
 
     ## [1] "tidygtfs" "gtfs"
 
-These are standard tibbles, not data.table as used by gtfsio for reading. The gtfs object actually has class `tidygtfs` as well as inheriting from `gtfs`.
+These are standard tibbles, not data.table as used by gtfsio for reading. The gtfs object has class `tidygtfs` as well as inheriting from `gtfs`.
 
 ## Try creating a new tidygtfs object
 
@@ -112,7 +112,7 @@ validate_gtfs(new_gtfs)
     ## # ... with 126 more rows, and 2 more variables: validation_status <chr>,
     ## #   validation_details <chr>
 
-Luckily, `tidytransit` doesn't do too much more than gtfsio: just converts to tibble, convert dates and times, add validation results and empty `.` slot.
+It seems `tidytransit` doesn't do too much more than gtfsio: just converts to tibble, convert dates and times, adds validation results and an empty `.` slot. However, those conversions rely on the table objects inheriting from `data.table`.
 
 ``` r
 read_gtfs
@@ -132,12 +132,103 @@ read_gtfs
     ##     attributes(g)$validation_result <- validation_result
     ##     g
     ## }
-    ## <bytecode: 0x0000000019965290>
+    ## <bytecode: 0x000000001994a480>
     ## <environment: namespace:tidytransit>
 
 ## Exporting as valid GTFS files
 
-Important notes:
+It might be quite a bit of work to create valid `tidygtfs` objects. It could be worth it if we want to use any of the `tidytransit` functions for analysis, but for just exporting to GTFS files for OTP use, it might be easier just to adapt a simplified version of the code from `gtfsio::export_gtfs`:
 
--   Dates are written as `yyyymmdd` text: beware of databases converting these to Date object-style integers.
--   Times are written as `hh:mm:ss` text: beware of conversions to hms objects.
+``` r
+gtfsio::export_gtfs
+```
+
+    ## function (gtfs, path, files = NULL, standard_only = FALSE, compression_level = 9, 
+    ##     as_dir = FALSE, overwrite = TRUE, quiet = TRUE) 
+    ## {
+    ##     gtfs_standards <- get_gtfs_standards()
+    ##     if (!inherits(gtfs, "gtfs")) 
+    ##         stop("'gtfs' must inherit from the 'gtfs' class.")
+    ##     if (!is.character(path) | length(path) != 1) 
+    ##         stop("'path' must be a string (a character vector of length 1).")
+    ##     if (path == tempdir()) 
+    ##         stop(paste0("Please use 'tempfile()' instead of 'tempdir()' to designate ", 
+    ##             "temporary directories."))
+    ##     if (!is.null(files) & !is.character(files)) 
+    ##         stop("'files' must either be a character vector or NULL.")
+    ##     if (!is.logical(standard_only) | length(standard_only) != 
+    ##         1) 
+    ##         stop("'standard_only' must be a logical vector of length 1.")
+    ##     if (!is.numeric(compression_level) | length(compression_level) != 
+    ##         1) 
+    ##         stop("'compression_level' must be a numeric vector of length 1.")
+    ##     if (!is.logical(as_dir) | length(as_dir) != 1) 
+    ##         stop("'as_dir' must be a logical vector of length 1.")
+    ##     if (!is.logical(overwrite) | length(overwrite) != 1) 
+    ##         stop("'overwrite' must be a logical vector of length 1.")
+    ##     if (!is.logical(quiet) | length(quiet) != 1) 
+    ##         stop("'quiet' must be a logical vector of length 1.")
+    ##     if (file.exists(path) & !overwrite) 
+    ##         stop("'path' points to an existing file/directory, ", 
+    ##             "but 'overwrite' is set to FALSE.")
+    ##     if (!as_dir & !grepl("\\.zip$", path)) 
+    ##         stop("'path' must have '.zip' extension. ", "If you meant to create a directory please set 'as_dir' to TRUE.")
+    ##     if (as_dir & grepl("\\.zip$", path)) {
+    ##         stop("'path' cannot have '.zip' extension when 'as_dir' is TRUE.")
+    ##     }
+    ##     extra_files <- setdiff(files, names(gtfs_standards))
+    ##     if (standard_only & !is.null(files) & !identical(extra_files, 
+    ##         character(0))) 
+    ##         stop("Non-standard file specified in 'files', ", "even though 'standard_only' is set to TRUE: ", 
+    ##             paste0("'", extra_files, "'", collapse = ", "))
+    ##     if (is.null(files)) 
+    ##         files <- names(gtfs)
+    ##     files <- setdiff(files, ".")
+    ##     extra_files <- setdiff(files, names(gtfs_standards))
+    ##     if (standard_only) 
+    ##         files <- setdiff(files, extra_files)
+    ##     missing_files <- setdiff(files, names(gtfs))
+    ##     if (!identical(missing_files, character(0))) 
+    ##         stop("The provided GTFS object does not contain the following ", 
+    ##             "elements specified in 'files': ", paste0("'", missing_files, 
+    ##                 "'", collapse = ", "))
+    ##     if (as_dir) 
+    ##         tmpd <- path
+    ##     else tmpd <- tempfile(pattern = "gtfsio")
+    ##     unlink(tmpd, recursive = TRUE)
+    ##     dir.create(tmpd)
+    ##     if (!quiet) 
+    ##         message("Writing text files to ", tmpd)
+    ##     for (file in files) {
+    ##         filename <- paste0(file, ".txt")
+    ##         filepath <- file.path(tmpd, filename)
+    ##         if (!quiet) 
+    ##             message("  - Writing ", filename)
+    ##         dt <- gtfs[[file]]
+    ##         if (standard_only) {
+    ##             file_cols <- names(dt)
+    ##             extra_cols <- setdiff(file_cols, names(gtfs_standards[[file]]))
+    ##             if (!identical(extra_cols, character(0))) 
+    ##                 dt <- dt[, !..extra_cols]
+    ##         }
+    ##         data.table::fwrite(dt, filepath)
+    ##     }
+    ##     if (!as_dir) {
+    ##         unlink(path, recursive = TRUE)
+    ##         filepaths <- file.path(tmpd, paste0(files, ".txt"))
+    ##         zip::zip(path, filepaths, compression_level = compression_level, 
+    ##             mode = "cherry-pick")
+    ##         if (!quiet) 
+    ##             message("GTFS object successfully zipped to ", path)
+    ##     }
+    ##     return(invisible(gtfs))
+    ## }
+    ## <bytecode: 0x000000002427c7d8>
+    ## <environment: namespace:gtfsio>
+
+Might it be easier to use `readr::write_csv()` rather than `data.table::fwrite()`?
+
+### Important notes:
+
+-   Dates in GTFS files need to be written as `yyyymmdd` text: beware of databases converting these to Date object-style integers.
+-   GTFS times are written as `hh:mm:ss` text: beware of conversions to `hms` objects.
