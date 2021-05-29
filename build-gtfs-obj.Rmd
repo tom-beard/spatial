@@ -1,0 +1,71 @@
+---
+title: "Building GTFS objects"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load test GTFS
+
+```{r}
+library(tidyverse)
+library(tidytransit)
+
+local_gtfs_path <- system.file("extdata", "google_transit_nyc_subway.zip", package = "tidytransit")
+gtfs <- read_gtfs(local_gtfs_path)
+names(gtfs)
+
+```
+
+## Explore GTFS tables.
+
+The `.` sublist is for storing additional tables (additional to what? anything not strictly required?)
+
+```{r}
+gtfs$.
+```
+
+```{r}
+gtfs$routes %>% class()
+class(gtfs)
+```
+
+These are standard tibbles, not data.table as used by gtfsio for reading. The gtfs object actually has class `tidygtfs` as well as inheriting from `gtfs`.
+
+## Try creating a new tidygtfs object
+
+```{r}
+txt_files <- list(
+  agency = gtfs$agency,
+  stops = gtfs$stops,
+  routes = gtfs$routes,
+  trips = gtfs$trips,
+  stop_times = gtfs$stop_times,
+  calendar = gtfs$calendar
+)
+
+new_gtfs <- gtfsio::new_gtfs(txt_files)
+class(new_gtfs)
+
+```
+
+This is *just* a `gtfs` object, without the `tidygtfs` class. But it still validates okay:
+
+```{r}
+validate_gtfs(new_gtfs)
+```
+
+Luckily, `tidytransit` doesn't do too much more than gtfsio: just converts to tibble, convert dates and times, add validation results and empty `.` slot.
+
+```{r}
+read_gtfs
+```
+
+## Exporting as valid GTFS files
+
+Important notes:
+
+* Dates are written as `yyyymmdd` text: beware of databases converting these to Date object-style integers.
+* Times are written as `hh:mm:ss` text: beware of conversions to hms objects.
