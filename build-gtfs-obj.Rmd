@@ -99,21 +99,58 @@ attributes(g)$validation_result <- validation_result
 class(g)
 ```
 
-This seems to work! 
+This seems to work! Let's make it into a function.
+
+```{r}
+make_tidygtfs <- function(gtfs_list) {
+  g <- gtfsio::new_gtfs(gtfs_list)
+  validation_result <- validate_gtfs(g)
+  g$. <- list()
+  g[names(g) != "."] <- lapply(g[names(g) != "."],
+      data.table::as.data.table)
+  g <- tidytransit:::convert_times_to_hms(g)
+  g <- tidytransit:::convert_dates(g)
+  g <- tidytransit:::set_dates_services(g)
+  g[names(g) != "."] <- lapply(g[names(g) != "."],
+      dplyr::as_tibble)
+  g <- gtfsio::new_gtfs(g)
+  class(g) <- c("tidygtfs", "gtfs")
+  attributes(g)$validation_result <- validation_result
+  g
+}
+
+test_txt_files <- list(
+  agency = gtfs$agency,
+  stops = gtfs$stops,
+  routes = gtfs$routes,
+  trips = gtfs$trips,
+  stop_times = gtfs$stop_times,
+  calendar = gtfs$calendar
+)
+
+test_gtfs <- make_tidygtfs(test_txt_files)
+class(test_gtfs)
+
+```
+
 
 ## Exporting as valid GTFS files
 
-It could be worth doing this to create valid `tidygtfs` objects if we want to use any of the `tidytransit` functions for analysis, but it might be too much for just exporting to GTFS files for OTP use.
+It could be worth doing this to create valid `tidygtfs` objects if we want to use any of the `tidytransit` functions for analysis, but it might be too much for just exporting to GTFS files for OTP use. In that case it might be easier just to adapt a simplified version of the code from `gtfsio::export_gtfs`.
 
-In that case it might be easier just to adapt a simplified version of the code from `gtfsio::export_gtfs`:
+Just as well `tidygtfs` writing seems to work okay:
 
 ```{r}
-gtfsio::export_gtfs
+# gtfsio::export_gtfs
+write_gtfs(test_gtfs, "test_gtfs_export.zip")
+gtfs_from_new_file <- read_gtfs("test_gtfs_export.zip")
+names(gtfs_from_new_file)
+attributes(gtfs_from_new_file)$validation_result
 ```
 
-If neccesary, we could use `readr::write_csv()` rather than `data.table::fwrite()`.
 
 ### Important notes:
 
-* Dates in GTFS files need to be written as `yyyymmdd` text: beware of databases converting these to Date object-style integers.
-* GTFS times are written as `hh:mm:ss` text: beware of conversions to `hms` objects.
+* ~~Dates in GTFS files need to be written as `yyyymmdd` text: beware of databases converting these to Date object-style integers.~~
+* ~~GTFS times are written as `hh:mm:ss` text: beware of conversions to `hms` objects.~~
+* We probably also want shapes to be included in a gtfs database.
