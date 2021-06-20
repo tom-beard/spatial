@@ -76,3 +76,87 @@ ggplot() +
   ggtitle("Betweenness centrality in Münster Roxel")
 
 
+# geometry access and manipulation ---------------------------------------------------
+
+net %>%
+  activate("edges") %>%
+  st_set_geometry(NULL) %>%
+  plot(draw_lines = FALSE, main = "Edges without geometries")
+
+net %>%
+  activate("nodes") %>%
+  st_set_geometry(NULL) %>%
+  plot(vertex.color = "black", main = "Nodes without geometries")
+# a very ugly graph vis, by default!
+
+as_sfnetwork(roxel, directed = TRUE) %>%
+  activate("edges") %>%
+  st_reverse()
+
+node_coords <- net %>%
+  activate("nodes") %>%
+  st_coordinates()
+
+node_coords[1:4, ]
+
+# Currently there are neither Z nor M coordinates.
+st_z_range(net)
+st_m_range(net)
+
+# Add Z coordinates with value 0 to all features.
+# This will affect both nodes and edges, no matter which element is active.
+st_zm(net, drop = FALSE, what = "Z")
+
+net %>%
+  st_zm(drop = FALSE, what = "Z") %>%
+  mutate(X = node_X(), Y = node_Y(), Z = node_Z(), M = node_M())
+
+net %>%
+  activate("nodes") %>%
+  st_bbox()
+net %>%
+  activate("edges") %>%
+  st_bbox()
+
+
+# joining, filtering & cropping -----------------------------------------------------
+
+# from https://luukvdmeer.github.io/sfnetworks/articles/join_filter.html
+
+net <- as_sfnetwork(roxel) %>%
+  st_transform(3035)
+
+p1 <- st_point(c(4151358, 3208045))
+p2 <- st_point(c(4151340, 3207520))
+p3 <- st_point(c(4151756, 3207506))
+p4 <- st_point(c(4151774, 3208031))
+
+poly <- st_multipoint(c(p1, p2, p3, p4)) %>%
+  st_cast("POLYGON") %>%
+  st_sfc(crs = 3035)
+
+net %>%
+  activate("edges") %>%
+  filter(edge_crosses(.E()))
+# findsedges that cross others: none in this example
+
+v <- 4152000
+l <- st_linestring(rbind(c(v, st_bbox(net)["ymin"]), c(v, st_bbox(net)["ymax"])))
+
+filtered_by_coords <- net %>%
+  activate("nodes") %>%
+  filter(node_X() > v)
+
+plot(net, col = "grey")
+plot(l, col = "red", lty = 4, lwd = 4, add = TRUE)
+plot(net, col = "grey")
+plot(filtered_by_coords, col = "red", add = TRUE)
+
+cropped <- net %>%
+  activate("edges") %>%
+  st_crop(poly) %>%
+  activate("nodes") %>%
+  filter(!node_is_isolated())
+
+plot(poly, border = "red", lty = 4, lwd = 4, add = TRUE)
+plot(cropped, add = TRUE)
