@@ -98,3 +98,17 @@ iso_sf %>%
   geom_sf(data = mock_sa_sf, aes(fill = jobs), alpha = 0.8) +
   geom_sf(colour = "red", fill = "red", alpha = 0.2) +
   theme_void()
+
+iso_sf %>% 
+  st_intersection(mock_sa_sf)
+
+iso_sf %>% 
+  slice(1) %>% 
+  st_join(mock_sa_sf, join = st_intersects) %>% 
+  plot()
+
+ggplot() +
+  geom_sf(data = st_join(mock_sa_sf, iso_sf[1, ], join = st_overlaps, left = FALSE), fill = "firebrick") +
+  geom_sf(data = st_join(mock_sa_sf, iso_sf[1, ], join = st_within, left = FALSE), fill = "steelblue") +
+  geom_sf(data = iso_sf[1, ], colour = "yellow", fill = NA) +
+  theme_void()
