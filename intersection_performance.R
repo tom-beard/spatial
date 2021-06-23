@@ -108,7 +108,10 @@ iso_sf %>%
   plot()
 
 ggplot() +
-  geom_sf(data = st_join(mock_sa_sf, iso_sf[1, ], join = st_overlaps, left = FALSE), fill = "firebrick") +
-  geom_sf(data = st_join(mock_sa_sf, iso_sf[1, ], join = st_within, left = FALSE), fill = "steelblue") +
+  geom_sf(data = st_as_sf(net, "edges"), colour = "grey80") +
+  geom_sf(data = st_join(mock_sa_sf, iso_sf[1, ], join = st_overlaps, left = FALSE),
+          fill = "firebrick", alpha = 0.5) +
+  geom_sf(data = st_join(mock_sa_sf, iso_sf[1, ], join = st_within, left = FALSE),
+          fill = "steelblue", alpha = 0.5) +
   geom_sf(data = iso_sf[1, ], colour = "yellow", fill = NA) +
   theme_void()
