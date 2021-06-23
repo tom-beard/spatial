@@ -335,7 +335,6 @@ plot(p, col = colors[1], pch = 8, cex = 2, lwd = 2, add = TRUE)
 
 # not a very good isochrone!
 
-
 # try improved isochrones -------------------------------------------------
 
 isochrone_sf <- iso %>% 
@@ -348,9 +347,10 @@ ggplot() +
   geom_sf(data = st_as_sf(net, "edges"), colour = "grey80") +
   geom_sf(data = isochrone_sf, colour = "blue", fill = "steelblue", alpha = 0.3) +
   geom_sf(data = st_as_sf(iso, "nodes"), colour = "firebrick", size = 0.5) +
+  geom_sf(data = p, colour = "magenta", alpha = 0.8, size = 2) +
   theme_void()
 
-# much better, but would be better if it interpreted along outermost edges rather than
+# much better, but would be improved if it interpolated along outermost edges rather than
 # contracting to outermost points
 
 
