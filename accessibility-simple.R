@@ -150,10 +150,14 @@ ggplot() +
   # geom_sf(data = st_as_sf(iso_nodes, "nodes"), colour = "firebrick", size = 0.5) +
   theme_void()
 
-reachable_pop <- intersecting_sa1s %>% pull(usual_resident_count) %>% sum()
-# ~ 10000 people
+ggsave(glue("walking-distance-from-{snakecase::to_snake_case(target_street_name)}.png"),
+       device = "png", type = "cairo", dpi = 100, width = 18, height = 10)
+
 
 # calculate local density -------------------------------------------------
+
+reachable_pop <- intersecting_sa1s %>% pull(usual_resident_count) %>% sum()
+# ~ 10000 people
 
 exercise_proportion <- 0.5
 exercise_window <- 8 # hours
