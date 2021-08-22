@@ -122,5 +122,46 @@ net <- local_highways %>%
   filter(!highway %in% c("service", "motorway", "motorway_link"),
          !foot %in% c("private", "no")) %>% 
   st_cast("LINESTRING") %>% # loses part of one multilinestring
-  as_sfnetwork()
+  as_sfnetwork() %>%
+  activate("edges") %>%
+  mutate(speed = units::set_units(1.34, "m/s")) %>% # default walking speed used by OpenTripPlanner
+  mutate(time = edge_length() / speed)
 
+# find target locations ---------------------------------------------------
+
+target_street_name <- "Oriental Parade"
+
+target_street_edges <- net %>%
+  activate("edges") %>%
+  filter(startsWith(name, target_street_name)) %>% 
+  st_as_sf("edges")
+
+target_intersections <- st_as_sf(net, "nodes") %>% 
+  st_filter(target_street_edges, .predicate = st_intersects)
+
+ggplot() +
+  geom_sf(data = st_as_sf(net, "edges"), colour = "grey50") +
+  geom_sf(data = target_intersections, size = 2, colour = "red")
+
+
+# find isochrone node sets ------------------------------------------------
+
+time_threshold <- 10 # minutes
+
+find_iso_nodes <- function(this_node, net, time_threshold) {
+  net %>%
+    activate("nodes") %>% 
+    filter(node_distance_from(this_node, weights = time) <= 60 * time_threshold) %>% 
+    st_as_sf("nodes")
+}
+
+iso_nodes <- st_nearest_feature(target_intersections, st_as_sf(net, "nodes")) %>% 
+  map_dfr(find_iso_nodes, net, time_threshold) %>% 
+  distinct()
+
+ggplot() +
+  geom_sf(data = st_as_sf(net, "edges"), colour = "grey80") +
+  # geom_sf(data = isochrone_sf, colour = "blue", fill = "steelblue", alpha = 0.3) +
+  geom_sf(data = st_as_sf(iso_nodes, "nodes"), colour = "firebrick", size = 0.5) +
+  geom_sf(data = this_point, colour = "magenta", alpha = 0.8, size = 2) +
+  theme_void()
