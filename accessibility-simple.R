@@ -7,6 +7,9 @@ library(fs)
 library(osmdata) # for local use, read from local files instead
 library(janitor)
 library(sfnetworks)
+library(tidygraph)
+library(tidyverse)
+library(igraph)
 library(leaflet)
 
 # base paths --------------------------------------------------------------
@@ -52,8 +55,9 @@ sa_geom_sf <- st_read(path_to_sa_geom, quiet = TRUE) %>%
   clean_names()
 
 ta_name <- "Wellington City"
+local_name <-  "Oriental Bay"
 
-local_census_df <- geo_area_df %>% 
+area_census_df <- geo_area_df %>% 
   mutate(sa1_id = as.character(SA12018_code)) %>% 
   select(sa1_id, SA22018_name, UR2018_name, TA2019_name) %>% 
   filter(TA2019_name == ta_name) %>% 
@@ -65,7 +69,7 @@ local_census_df <- geo_area_df %>%
 # test vis ----------------------------------------------------------------
 
 sa_geom_sf %>% 
-  right_join(local_census_df %>% filter(SA22018_name == "Oriental Bay"),
+  right_join(area_census_df %>% filter(SA22018_name == local_name),
              by = "sa1_id") %>% 
   st_transform(crs = 4326) %>% 
   leaflet() %>%
@@ -83,5 +87,40 @@ sa_geom_sf %>%
                      overlayGroups = c("sa1"),
                      options = layersControlOptions(collapsed = FALSE)) %>%
     addMeasure(primaryLengthUnit = "meters", primaryAreaUnit = "sqmeters")
-    
+
+# get and process OSM data ------------------------------------------------------------
+
+local_bbox <- getbb(paste("Oriental Bay", "NZ"))
+local_bbox_st <- c(xmin = local_bbox["x", "min"], xmax = local_bbox["x", "max"],
+                      ymin = local_bbox["y", "min"], ymax = local_bbox["y", "max"]) %>% 
+  st_bbox(crs = 4326) %>% 
+  st_as_sfc() %>% 
+  st_buffer(dist = 2000, nQuadSegs = 1) %>% 
+  st_bbox()
+local_osm <- opq(bbox = local_bbox) %>%
+  osmdata_sf()
+
+local_lines <- local_osm$osm_lines
+local_highways <- local_lines %>% filter(!is.na(highway)) %>%
+  st_crop(local_bbox_st)
+
+local_highways %>%
+  select(where(~!all(is.na(.x)))) %>% 
+  glimpse()
+
+local_highways %>% 
+  ggplot() +
+  geom_sf() +
+  labs(x = "", y = "", title = "") +
+  theme_void()
+
+
+# make sf network ---------------------------------------------------------
+
+net <- local_highways %>%
+  select(where(~!all(is.na(.x)))) %>% 
+  filter(!highway %in% c("service", "motorway", "motorway_link"),
+         !foot %in% c("private", "no")) %>% 
+  st_cast("LINESTRING") %>% # loses part of one multilinestring
+  as_sfnetwork()
 
