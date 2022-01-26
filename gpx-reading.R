@@ -38,3 +38,44 @@ gpx_tracks_layer %>% glimpse()
 # geometry has no time stamps or elevations
 
 gpx_tracks_timestamps <- gpx_tracks_layer$desc
+
+# read track_points layer -------------------------------------------------------
+
+gpx_track_points_layer <- st_read(test_file, layer = "track_points", stringsAsFactors = FALSE)
+gpx_track_points_layer %>% str()
+gpx_track_points_layer %>% glimpse()
+
+gpx_track_points_layer %>% 
+  as_tibble() %>% 
+  count(track_fid, track_seg_id)
+
+# useful cols: track_seg_id, track_seg_point_id, ele, time
+
+# test vis ----------------------------------------------------------------
+
+gpx_track_points_layer %>% 
+  leaflet() %>%
+    addProviderTiles(providers$Stamen.Terrain, group = "Terrain") %>%
+    addProviderTiles(providers$Esri.WorldTopoMap, group = "TopoMap") %>%
+    addProviderTiles(providers$Esri.WorldImagery, group = "Aerial") %>%
+    addTiles(group = "OSM") %>%
+    addProviderTiles(providers$Stamen.TonerLite, group = "Toner Lite") %>%
+    addCircleMarkers(group = "track points",
+                     label = ~glue("{time}: {ele}"),
+                     # labelOptions = labelOptions(noHide = T, textsize = "8px"),
+                     radius = 3, stroke = FALSE, color = "blue", fillColor = "blue", opacity = 0.5, fill = TRUE,
+                     popup = ~glue("{time}: {ele}")) %>% 
+    addLayersControl(baseGroups = c("Terrain", "TopoMap", "Aerial", "OSM", "Toner Lite"),
+                     overlayGroups = c("track points"),
+                     options = layersControlOptions(collapsed = FALSE)) %>%
+    addMeasure(primaryLengthUnit = "meters", primaryAreaUnit = "sqmeters")
+    
+gpx_track_points_layer %>% 
+  as_tibble() %>% 
+  ggplot() +
+  geom_line(aes(x = time, y = ele, colour = factor(track_seg_id)), size = 0.5, alpha = 0.8) +
+  geom_point(aes(x = time, y = ele, colour = factor(track_seg_id)), size = 0.5, alpha = 0.8) +
+  labs(x = "", y = "", title = "") +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank())
+  
