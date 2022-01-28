@@ -34,8 +34,9 @@ gpx_tracks_layer <- st_read(test_file, layer = "tracks", stringsAsFactors = FALS
 gpx_tracks_layer %>% str()
 gpx_tracks_layer %>% glimpse()
 
-# much more sparse info than kml: the "desc" columns just contains the timestamp
-# geometry has no time stamps or elevations
+# much more sparse description info than kml: the "desc" columns just contains the timestamp,
+# with no summaries such as distance, avg speed, max altitude etc
+# geometry has no time stamps or elevations, but these are in track_points below
 
 gpx_tracks_timestamps <- gpx_tracks_layer$desc
 
@@ -50,6 +51,7 @@ gpx_track_points_layer %>%
   count(track_fid, track_seg_id)
 
 # useful cols: track_seg_id, track_seg_point_id, ele, time
+# this means that unlike kml, both elevation and time are recorded for each point
 
 # test vis ----------------------------------------------------------------
 
@@ -78,4 +80,26 @@ gpx_track_points_layer %>%
   labs(x = "", y = "", title = "") +
   theme_minimal() +
   theme(panel.grid.minor = element_blank())
-  
+
+# this shows elevation vs time, but elevation vs cumulative distance would be more useful
+
+
+# gpx reading functions ---------------------------------------------------
+
+read_gpx <- function(file_to_read, as_list = TRUE) {
+  tracks_layer <- st_read(file_to_read, layer = "tracks", stringsAsFactors = FALSE)
+  tracks_timestamps <- tracks_layer$desc
+  track_points_layer <- st_read(file_to_read, layer = "track_points", stringsAsFactors = FALSE) %>% 
+    select(track_fid, track_seg_id, track_seg_point_id, ele, time, geometry)
+  list(
+    tracks = tracks_layer,
+    timestamps = tracks_layer$desc,
+    track_points = track_points_layer
+    )
+}
+
+gpx_obj <- read_gpx(test_file)
+str(gpx_obj)
+
+# next step: write function that wraps this to just get the track points sf, with file name column
+
