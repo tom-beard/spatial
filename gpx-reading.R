@@ -101,5 +101,24 @@ read_gpx <- function(file_to_read, as_list = TRUE) {
 gpx_obj <- read_gpx(test_file)
 str(gpx_obj)
 
-# next step: write function that wraps this to just get the track points sf, with file name column
+read_gpx_track_points <- function(file_to_read, file_label = NULL) {
+  if (is.null(file_label)) {file_label <- file_to_read}
+  read_gpx(file_to_read)$track_points %>% 
+    add_column(file_label = file_label, .before = 1)
+}
 
+multitrack_sf <- path(test_dir, c("Track_367.gpx", "Track_368.gpx")) %>%
+  map_dfr(read_gpx_track_points)
+
+multitrack_sf %>% 
+  as_tibble() %>% 
+  mutate(walk = factor(file_label)) %>% 
+  group_by(walk) %>% 
+  mutate(elapsed_time = as.numeric(difftime(time, min(time), units = "hours"))) %>% 
+  ungroup() %>% 
+  ggplot() +
+  geom_line(aes(x = elapsed_time, y = ele, colour = walk), size = 0.5, alpha = 0.8) +
+  geom_point(aes(x = elapsed_time, y = ele, colour = walk), size = 0.5, alpha = 0.8) +
+  labs(y = "elevation (m amsl)", x = "hours", title = "") +
+  theme_minimal() +
+  theme(panel.grid.minor.y = element_blank())
