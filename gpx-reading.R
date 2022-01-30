@@ -86,16 +86,29 @@ gpx_track_points_layer %>%
 
 # gpx reading functions ---------------------------------------------------
 
+st_empty <- function(type = "POINT", crs = 4326) {
+  sf::st_as_sfc(paste0(toupper(type), "(EMPTY)"), crs = crs)
+}
+
 read_gpx <- function(file_to_read, as_list = TRUE) {
   tracks_layer <- st_read(file_to_read, layer = "tracks", stringsAsFactors = FALSE)
   tracks_timestamps <- tracks_layer$desc
   track_points_layer <- st_read(file_to_read, layer = "track_points", stringsAsFactors = FALSE) %>% 
     select(track_fid, track_seg_id, track_seg_point_id, ele, time, geometry)
+  if (st_crs(tracks_layer)$input == "WGS 84") {
+    tracks_layer = st_set_crs(tracks_layer, 4326)
+  } # essentially the same, but this ensures compatiblity with other objects
+  if (st_crs(track_points_layer)$input == "WGS 84") {
+    track_points_layer = st_set_crs(track_points_layer, 4326)
+  } # essentially the same, but this ensures compatiblity with other objects
   list(
     tracks = tracks_layer,
     timestamps = tracks_layer$desc,
-    track_points = track_points_layer
-    )
+    track_points = track_points_layer %>% 
+      mutate(distance = st_distance(geometry, lag(geometry, default = st_empty()), by_element = TRUE)) %>% 
+      tidyr::replace_na(list(distance = 0)) %>% 
+      mutate(cume_distance = cumsum(distance))
+  )
 }
 
 gpx_obj <- read_gpx(test_file)
@@ -110,6 +123,9 @@ read_gpx_track_points <- function(file_to_read, file_label = NULL) {
 multitrack_sf <- path(test_dir, c("Track_367.gpx", "Track_368.gpx")) %>%
   map_dfr(read_gpx_track_points)
 
+
+# visualise walks ---------------------------------------------------------
+
 multitrack_sf %>% 
   as_tibble() %>% 
   mutate(walk = factor(file_label)) %>% 
@@ -119,6 +135,16 @@ multitrack_sf %>%
   ggplot() +
   geom_line(aes(x = elapsed_time, y = ele, colour = walk), size = 0.5, alpha = 0.8) +
   geom_point(aes(x = elapsed_time, y = ele, colour = walk), size = 0.5, alpha = 0.8) +
-  labs(y = "elevation (m amsl)", x = "hours", title = "") +
+  labs(y = "elevation (m amsl)", x = "hours", title = "Elevation over time") +
+  theme_minimal() +
+  theme(panel.grid.minor.y = element_blank())
+
+multitrack_sf %>% 
+  as_tibble() %>% 
+  mutate(walk = factor(file_label), km = as.numeric(cume_distance) / 1000) %>% 
+  ggplot() +
+  geom_line(aes(x = km, y = ele, colour = walk), size = 0.5, alpha = 0.8) +
+  geom_point(aes(x = km, y = ele, colour = walk), size = 0.5, alpha = 0.8) +
+  labs(y = "elevation (m amsl)", x = "distance walked (km)", title = "Elevation by distance") +
   theme_minimal() +
   theme(panel.grid.minor.y = element_blank())
