@@ -120,7 +120,11 @@ read_gpx_track_points <- function(file_to_read, file_label = NULL) {
     add_column(file_label = file_label, .before = 1)
 }
 
-multitrack_sf <- path(test_dir, c("Track_367.gpx", "Track_368.gpx")) %>%
+# to do: read file names from directory; find better names
+
+gpx_files <- c("Track_366.gpx", "Track_367.gpx", "Track_368.gpx", "Track_369.gpx")
+
+multitrack_sf <- path(test_dir, gpx_files) %>%
   map_dfr(read_gpx_track_points)
 
 
