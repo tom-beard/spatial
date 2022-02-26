@@ -120,20 +120,16 @@ read_gpx_track_points <- function(file_to_read, file_label = NULL) {
     add_column(file_label = file_label, .before = 1)
 }
 
-# to do: read file names from directory; find better names
-
-gpx_files <- c("Track_366.gpx", "Track_367.gpx", "Track_368.gpx", "Track_369.gpx",
-               "Track_370.gpx", "Track_371.gpx")
-
-multitrack_sf <- path(test_dir, gpx_files) %>%
-  map_dfr(read_gpx_track_points)
-
+multitrack_sf <- dir_ls(test_dir, glob = "*.gpx") %>%
+  tail(10) %>% # for testing
+  map_dfr(read_gpx_track_points) %>% 
+  mutate(name = path_ext_remove(path_file(file_label)), .befor = 1L)
 
 # visualise walks over time & distance ---------------------------------------------------------
 
 multitrack_sf %>% 
   as_tibble() %>% 
-  mutate(walk = factor(file_label)) %>% 
+  mutate(walk = factor(name)) %>% 
   group_by(walk) %>% 
   mutate(elapsed_time = as.numeric(difftime(time, min(time), units = "hours"))) %>% 
   ungroup() %>% 
@@ -146,7 +142,7 @@ multitrack_sf %>%
 
 multitrack_sf %>% 
   as_tibble() %>% 
-  mutate(walk = factor(file_label), km = as.numeric(cume_distance) / 1000) %>% 
+  mutate(walk = factor(name), km = as.numeric(cume_distance) / 1000) %>% 
   ggplot() +
   geom_line(aes(x = km, y = ele, colour = walk), size = 0.5, alpha = 0.8) +
   geom_point(aes(x = km, y = ele, colour = walk), size = 0.5, alpha = 0.8) +
@@ -163,8 +159,7 @@ vertical_exaggeration <- 1
 
 # add elevation to points (there has to be a nicer way of doing this!)
 path_3d_sf <- multitrack_sf %>% 
-  transmute(name = path_ext_remove(path_file(file_label)),
-            z = ele * vertical_exaggeration, geometry) %>% 
+  transmute(name, z = ele * vertical_exaggeration, geometry) %>% 
   mutate(x = st_coordinates(.)[, 1], y = st_coordinates(.)[, 2]) %>% 
   as_tibble() %>%
   group_by(name) %>% 
