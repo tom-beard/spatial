@@ -122,13 +122,14 @@ read_gpx_track_points <- function(file_to_read, file_label = NULL) {
 
 # to do: read file names from directory; find better names
 
-gpx_files <- c("Track_366.gpx", "Track_367.gpx", "Track_368.gpx", "Track_369.gpx")
+gpx_files <- c("Track_366.gpx", "Track_367.gpx", "Track_368.gpx", "Track_369.gpx",
+               "Track_370.gpx", "Track_371.gpx")
 
 multitrack_sf <- path(test_dir, gpx_files) %>%
   map_dfr(read_gpx_track_points)
 
 
-# visualise walks ---------------------------------------------------------
+# visualise walks over time & distance ---------------------------------------------------------
 
 multitrack_sf %>% 
   as_tibble() %>% 
@@ -152,3 +153,34 @@ multitrack_sf %>%
   labs(y = "elevation (m amsl)", x = "distance walked (km)", title = "Elevation by distance") +
   theme_minimal() +
   theme(panel.grid.minor.y = element_blank())
+
+
+# use deck.gl for 3d vis --------------------------------------------------
+
+library(deckgl)
+
+vertical_exaggeration <- 1
+
+# add elevation to points (there has to be a nicer way of doing this!)
+path_3d_sf <- multitrack_sf %>% 
+  transmute(name = path_ext_remove(path_file(file_label)),
+            z = ele * vertical_exaggeration, geometry) %>% 
+  mutate(x = st_coordinates(.)[, 1], y = st_coordinates(.)[, 2]) %>% 
+  as_tibble() %>%
+  group_by(name) %>% 
+  st_as_sf(coords = c("x", "y", "z"), crs = 4326) %>% 
+  summarise(do_union = FALSE) %>% 
+  st_cast("LINESTRING")
+
+deckgl(zoom = 11, pitch = 45, latitude = -41.3, longitude = 174.77) %>%
+  add_path_layer(
+    data = path_3d_sf,
+    getPath = JS("d => d.geometry.coordinates"),
+    getColor = "red",
+    widthScale = 20,
+    widthMinPixels = 2,
+    getTooltip = ~name,
+    getWidth = 3
+  ) %>%
+  add_basemap()
+
