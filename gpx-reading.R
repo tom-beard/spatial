@@ -167,15 +167,22 @@ path_3d_sf <- multitrack_sf %>%
   summarise(do_union = FALSE) %>% 
   st_cast("LINESTRING")
 
-deckgl(zoom = 11, pitch = 45, latitude = -41.3, longitude = 174.77) %>%
+paths_centre <- path_3d_sf %>%
+  st_bbox() %>% 
+  st_as_sfc() %>% 
+  st_centroid() %>% 
+  st_coordinates()
+
+deckgl(zoom = 9.5, pitch = 45, longitude = paths_centre[1], latitude = paths_centre[2],
+       width = 1200, height = 900) %>%
   add_path_layer(
     data = path_3d_sf,
     getPath = JS("d => d.geometry.coordinates"),
     getColor = "red",
-    widthScale = 20,
+    widthScale = 1,
     widthMinPixels = 2,
     getTooltip = ~name,
     getWidth = 3
   ) %>%
-  add_basemap()
+  add_basemap(style = use_carto_style("positron"))
 
