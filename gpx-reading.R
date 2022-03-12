@@ -10,6 +10,8 @@ library(skimr)
 library(janitor)
 library(sf)
 library(leaflet)
+library(plotly)
+library(deckgl)
 # library(ggmap)
 # library(xml2)
 # library(rgdal)
@@ -127,7 +129,7 @@ multitrack_sf <- dir_ls(test_dir, glob = "*.gpx") %>%
 
 # visualise walks over time & distance ---------------------------------------------------------
 
-multitrack_sf %>% 
+elev_by_time_plot <- multitrack_sf %>% 
   as_tibble() %>% 
   mutate(walk = factor(name)) %>% 
   group_by(walk) %>% 
@@ -140,7 +142,7 @@ multitrack_sf %>%
   theme_minimal() +
   theme(panel.grid.minor.y = element_blank())
 
-multitrack_sf %>% 
+elev_by_dist_plot <- multitrack_sf %>% 
   as_tibble() %>% 
   mutate(walk = factor(name), km = as.numeric(cume_distance) / 1000) %>% 
   ggplot() +
@@ -150,10 +152,9 @@ multitrack_sf %>%
   theme_minimal() +
   theme(panel.grid.minor.y = element_blank())
 
+ggplotly(elev_by_dist_plot)
 
 # use deck.gl for 3d vis --------------------------------------------------
-
-library(deckgl)
 
 vertical_exaggeration <- 1
 
