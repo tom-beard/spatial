@@ -174,23 +174,27 @@ paths_centre <- path_3d_sf %>%
   st_centroid() %>% 
   st_coordinates()
 
-view_widget <- function(widget, widget_path = here("temp_widget.html")) {
+view_widget <- function(widget, widget_path = fs::path(tempdir(), "widget.html")) {
   htmlwidgets::saveWidget(widget, file = widget_path)
   browseURL(widget_path)
 }
 
 deckgl(zoom = 9.5, pitch = 45,
-                        longitude = paths_centre[1], latitude = paths_centre[2],
-                        width = 1200, height = 900) %>%
+       longitude = paths_centre[1], latitude = paths_centre[2],
+       width = "100%", height = 900) %>%
   add_path_layer(
     data = path_3d_sf,
     getPath = JS("d => d.geometry.coordinates"),
-    getColor = "red",
+    getColor = "firebrick",
     widthScale = 1,
     widthMinPixels = 2,
     getTooltip = ~name,
-    getWidth = 3
+    getWidth = 2
   ) %>%
   add_basemap(style = use_carto_style("positron")) %>% 
+  add_control(
+    str_glue("<h2>Last {nrow(path_3d_sf)} walks</h2>"),
+    pos = "top-right",
+    style = "background: steelblue; color: white;"
+  ) %>%
   view_widget()
-
