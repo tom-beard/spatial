@@ -108,7 +108,7 @@ read_gpx <- function(file_to_read, as_list = TRUE) {
     timestamps = tracks_layer$desc,
     track_points = track_points_layer %>% 
       mutate(distance = st_distance(geometry, lag(geometry, default = st_empty()), by_element = TRUE)) %>% 
-      tidyr::replace_na(list(distance = 0)) %>% 
+      tidyr::replace_na(list(distance = units::as_units(0, "m"))) %>% 
       mutate(cume_distance = cumsum(distance))
   )
 }
