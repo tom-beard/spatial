@@ -5,6 +5,7 @@ library(fs)
 source_url <- "https://www.stats.govt.nz/information-releases/building-consents-issued-september-2022/"
 
 data_dir <- "D:/GIS/building-consents"
+img_dir <- "D:/Pictures/Twitter"
 bc_file <- "New dwellings consented by 2021 statistical area 2 (Monthly).csv"
 bc_df <- read_csv(path(data_dir, bc_file))
 
@@ -27,3 +28,6 @@ bc_df %>%
   facet_grid(rows = vars(SA2_type)) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.spacing.y = unit(1, "line"))
+
+ggsave(path(img_dir, "building-consents-wellington-20220901.png"),
+            width = 12.00, height = 6.75, units = "in", dpi = 100, bg = "white")
